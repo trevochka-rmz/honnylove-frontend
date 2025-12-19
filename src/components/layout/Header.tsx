@@ -77,12 +77,12 @@ export const Header = () => {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
-              <Link to="/wishlist">
+              <Link to="/favorites">
                 <Heart className="h-5 w-5" />
               </Link>
             </Button>
             <Button variant="ghost" size="icon" asChild>
-              <Link to="/account">
+              <Link to="/auth">
                 <User className="h-5 w-5" />
               </Link>
             </Button>
