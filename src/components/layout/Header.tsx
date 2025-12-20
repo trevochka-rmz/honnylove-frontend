@@ -55,7 +55,7 @@ export const Header = () => {
 
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <h1 className="text-2xl md:text-3xl font-playfair font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary">
               HonnyLove
             </h1>
           </Link>

@@ -9,6 +9,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Brands from "./pages/Brands";
+import BrandDetail from "./pages/BrandDetail";
 import Sales from "./pages/Sales";
 import Favorites from "./pages/Favorites";
 import Auth from "./pages/Auth";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/brands" element={<Brands />} />
+          <Route path="/brands/:brandId" element={<BrandDetail />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/auth" element={<Auth />} />
