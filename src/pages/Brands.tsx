@@ -2,21 +2,7 @@ import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { products } from "@/data/products";
-
-const brands = [
-  { id: "beautylab", name: "BeautyLab", logo: "🧴", description: "Профессиональная косметика для ухода за кожей", productsCount: 0 },
-  { id: "bodybliss", name: "BodyBliss", logo: "🛁", description: "Роскошный уход за телом", productsCount: 0 },
-  { id: "clearskin", name: "ClearSkin", logo: "✨", description: "Чистая и здоровая кожа", productsCount: 0 },
-  { id: "colorpop", name: "ColorPop", logo: "💄", description: "Яркая декоративная косметика", productsCount: 0 },
-  { id: "cozynight", name: "CozyNight", logo: "🌙", description: "Уютные пижамы и домашняя одежда", productsCount: 0 },
-  { id: "dreamwear", name: "DreamWear", logo: "💫", description: "Одежда для сладких снов", productsCount: 0 },
-  { id: "eyeart", name: "EyeArt", logo: "👁️", description: "Искусство макияжа глаз", productsCount: 0 },
-  { id: "freshglow", name: "FreshGlow", logo: "🌸", description: "Свежесть и сияние каждый день", productsCount: 0 },
-  { id: "glowup", name: "GlowUp", logo: "⭐", description: "Преображение и красота", productsCount: 0 },
-  { id: "naturelove", name: "NatureLove", logo: "🍃", description: "Натуральная косметика", productsCount: 0 },
-  { id: "silktouch", name: "SilkTouch", logo: "🦋", description: "Нежность шёлка для кожи", productsCount: 0 },
-  { id: "sunshield", name: "SunShield", logo: "☀️", description: "Защита от солнца", productsCount: 0 },
-];
+import { brands } from "@/data/brands";
 
 // Count products for each brand
 const brandsWithCounts = brands.map(brand => ({
@@ -46,7 +32,7 @@ const Brands = () => {
           {brandsWithCounts.map((brand) => (
             <Link
               key={brand.id}
-              to={`/catalog?brand=${brand.name}`}
+              to={`/brands/${brand.id}`}
               className="group bg-card rounded-2xl p-6 border border-border hover:border-primary hover:shadow-lg transition-all duration-300"
             >
               <div className="text-center">
