@@ -24,26 +24,87 @@ export interface ApiProduct {
   isFeatured: boolean;
 }
 
+export interface ProductsResponse {
+  products: ApiProduct[];
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface ProductsParams {
+  page?: number;
+  limit?: number;
+  category?: string;
+  subcategoryId?: number;
+  brandId?: number;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  isFeatured?: boolean;
+  isNew?: boolean;
+  isBestseller?: boolean;
+  sort?: 'popularity' | 'price_asc' | 'price_desc' | 'rating' | 'new_random' | 'id_desc';
+}
+
 export interface ApiBrand {
-  id: number;
+  id: number | string;
   name: string;
   description: string;
-  website: string | null;
-  logo_url: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  website?: string | null;
+  logo_url?: string | null;
+  logo?: string | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
   full_description?: string;
+  fullDescription?: string;
   country?: string;
   founded?: string;
   philosophy?: string;
   highlights?: string[];
-  productsCount?: string;
+  productsCount?: string | number;
+}
+
+export interface BrandsResponse {
+  brands: ApiBrand[];
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface BrandsParams {
+  page?: number;
+  limit?: number;
+  isActive?: boolean;
+  search?: string;
+  filter?: 'featured' | 'popular' | 'new';
 }
 
 export const api = {
-  async getProducts(): Promise<ApiProduct[]> {
-    const response = await fetch(`${API_BASE_URL}/products`);
+  async getProducts(params: ProductsParams = {}): Promise<ProductsResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.category) searchParams.append('category', params.category);
+    if (params.subcategoryId) searchParams.append('subcategoryId', params.subcategoryId.toString());
+    if (params.brandId) searchParams.append('brandId', params.brandId.toString());
+    if (params.search) searchParams.append('search', params.search);
+    if (params.minPrice !== undefined) searchParams.append('minPrice', params.minPrice.toString());
+    if (params.maxPrice !== undefined) searchParams.append('maxPrice', params.maxPrice.toString());
+    if (params.isFeatured !== undefined) searchParams.append('isFeatured', params.isFeatured.toString());
+    if (params.isNew !== undefined) searchParams.append('isNew', params.isNew.toString());
+    if (params.isBestseller !== undefined) searchParams.append('isBestseller', params.isBestseller.toString());
+    if (params.sort) searchParams.append('sort', params.sort);
+
+    const queryString = searchParams.toString();
+    const url = `${API_BASE_URL}/products${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch products');
     return response.json();
   },
@@ -60,8 +121,19 @@ export const api = {
     return response.json();
   },
 
-  async getBrands(): Promise<ApiBrand[]> {
-    const response = await fetch(`${API_BASE_URL}/brands`);
+  async getBrands(params: BrandsParams = {}): Promise<BrandsResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.isActive !== undefined) searchParams.append('isActive', params.isActive.toString());
+    if (params.search) searchParams.append('search', params.search);
+    if (params.filter) searchParams.append('filter', params.filter);
+
+    const queryString = searchParams.toString();
+    const url = `${API_BASE_URL}/brands${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch brands');
     return response.json();
   },

@@ -10,7 +10,9 @@ import { ArrowLeft, ArrowRight, MapPin, Calendar, Sparkles, Loader2 } from "luci
 const BrandDetail = () => {
   const { brandId } = useParams<{ brandId: string }>();
   const { data: brand, isLoading: brandLoading } = useBrand(brandId || "");
-  const { data: products = [] } = useProducts();
+  const { data: productsData } = useProducts({ limit: 50 });
+
+  const products = productsData?.products || [];
 
   if (brandLoading) {
     return (
@@ -73,7 +75,7 @@ const BrandDetail = () => {
                 {brand.name}
               </h1>
               <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
-                {brand.fullDescription}
+                {brand.fullDescription || brand.description}
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
                 <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
