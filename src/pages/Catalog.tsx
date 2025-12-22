@@ -1,24 +1,36 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
-import { useProducts } from '@/hooks/useProducts';
+import { useProducts, ProductsResult } from '@/hooks/useProducts';
+import { ProductsParams } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SlidersHorizontal, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
+
+const ITEMS_PER_PAGE = 9;
 
 const Catalog = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const brandParam = searchParams.get('brand');
   const newParam = searchParams.get('new');
   const bestsellerParam = searchParams.get('bestseller');
+  const pageParam = searchParams.get('page');
 
-  const { data: products = [], isLoading } = useProducts();
-
+  const [currentPage, setCurrentPage] = useState(pageParam ? parseInt(pageParam) : 1);
   const [selectedBrands, setSelectedBrands] = useState<string[]>(
     brandParam ? [brandParam] : []
   );
@@ -26,74 +38,111 @@ const Catalog = () => {
     categoryParam ? [categoryParam] : []
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [sortBy, setSortBy] = useState<string>('popular');
+  const [sortBy, setSortBy] = useState<string>('id_desc');
+
+  // Map frontend sort values to API sort values
+  const getSortParam = (sort: string): ProductsParams['sort'] => {
+    switch (sort) {
+      case 'price-asc': return 'price_asc';
+      case 'price-desc': return 'price_desc';
+      case 'rating': return 'rating';
+      case 'new': return 'new_random';
+      case 'popular': return 'popularity';
+      default: return 'id_desc';
+    }
+  };
+
+  // Build API params
+  const apiParams: ProductsParams = {
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    sort: getSortParam(sortBy),
+  };
+
+  if (selectedCategories.length === 1) {
+    apiParams.category = selectedCategories[0];
+  }
+  if (newParam === 'true') {
+    apiParams.isNew = true;
+  }
+  if (bestsellerParam === 'true') {
+    apiParams.isBestseller = true;
+  }
+  if (priceRange[0] > 0) {
+    apiParams.minPrice = priceRange[0];
+  }
+  if (priceRange[1] < 10000) {
+    apiParams.maxPrice = priceRange[1];
+  }
+
+  const { data, isLoading } = useProducts(apiParams);
+  
+  const result: ProductsResult = data || {
+    products: [],
+    total: 0,
+    page: 1,
+    pages: 1,
+    limit: ITEMS_PER_PAGE,
+    hasMore: false,
+  };
+
+  // Filter by brand on client side (API supports single brandId, we support multiple brand names)
+  const filteredProducts = selectedBrands.length > 0
+    ? result.products.filter(p => selectedBrands.includes(p.brand))
+    : result.products;
 
   const handleBrandChange = (brand: string) => {
     setSelectedBrands((prev) =>
       prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
     );
+    setCurrentPage(1);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
+    setCurrentPage(1);
   };
 
   const handleReset = () => {
     setSelectedBrands([]);
     setSelectedCategories([]);
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 10000]);
+    setCurrentPage(1);
   };
 
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-    // Filter by URL params
-    if (newParam === 'true') {
-      filtered = filtered.filter((p) => p.isNew);
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    setCurrentPage(1);
+  };
+
+  // Generate pagination numbers
+  const getPaginationNumbers = () => {
+    const pages = [];
+    const totalPages = result.pages;
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, 'ellipsis', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages);
+      }
     }
-    if (bestsellerParam === 'true') {
-      filtered = filtered.filter((p) => p.isBestseller);
-    }
-
-    // Filter by brands
-    if (selectedBrands.length > 0) {
-      filtered = filtered.filter((p) => selectedBrands.includes(p.brand));
-    }
-
-    // Filter by categories
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((p) => selectedCategories.includes(p.category));
-    }
-
-    // Filter by price
-    filtered = filtered.filter((p) => {
-      const price = p.discountPrice || p.price;
-      return price >= priceRange[0] && price <= priceRange[1];
-    });
-
-    // Sort
-    switch (sortBy) {
-      case 'price-asc':
-        filtered.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
-        break;
-      case 'price-desc':
-        filtered.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
-        break;
-      case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'new':
-        filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
-        break;
-      default:
-        // popular - by review count
-        filtered.sort((a, b) => b.reviewCount - a.reviewCount);
-    }
-
-    return filtered;
-  }, [products, selectedBrands, selectedCategories, priceRange, sortBy, newParam, bestsellerParam]);
+    
+    return pages;
+  };
 
   if (isLoading) {
     return (
@@ -127,7 +176,7 @@ const Catalog = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-playfair font-bold mb-2">Каталог</h1>
           <p className="text-muted-foreground font-roboto">
-            Найдено товаров: {filteredProducts.length}
+            Найдено товаров: {result.total}
           </p>
         </div>
 
@@ -157,11 +206,12 @@ const Catalog = () => {
                 <span className="text-sm font-roboto text-muted-foreground hidden sm:inline">
                   Сортировка:
                 </span>
-                <Select value={sortBy} onValueChange={setSortBy}>
+                <Select value={sortBy} onValueChange={handleSortChange}>
                   <SelectTrigger className="w-[180px] font-roboto">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="id_desc">По умолчанию</SelectItem>
                     <SelectItem value="popular">По популярности</SelectItem>
                     <SelectItem value="price-asc">Цена: по возрастанию</SelectItem>
                     <SelectItem value="price-desc">Цена: по убыванию</SelectItem>
@@ -174,11 +224,52 @@ const Catalog = () => {
 
             {/* Products Grid */}
             {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {result.pages > 1 && (
+                  <div className="mt-8">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                        
+                        {getPaginationNumbers().map((page, index) => (
+                          <PaginationItem key={index}>
+                            {page === 'ellipsis' ? (
+                              <PaginationEllipsis />
+                            ) : (
+                              <PaginationLink
+                                onClick={() => handlePageChange(page as number)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            )}
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => currentPage < result.pages && handlePageChange(currentPage + 1)}
+                            className={currentPage === result.pages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-12">
                 <p className="text-lg font-roboto text-muted-foreground">

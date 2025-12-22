@@ -15,8 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const ProductDetail = () => {
   const { id } = useParams();
   const { data: product, isLoading } = useProduct(id || '');
-  const { data: allProducts = [] } = useProducts();
+  const { data: allProductsData } = useProducts({ limit: 50 });
   const addItem = useCartStore((state) => state.addItem);
+
+  const allProducts = allProductsData?.products || [];
 
   const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, ApiProduct } from '@/services/api';
+import { api, ApiProduct, ProductsParams, ProductsResponse } from '@/services/api';
 import { products as fallbackProducts, Product } from '@/data/products';
 
 // Convert API product to internal Product type
@@ -23,19 +23,93 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => ({
   isBestseller: apiProduct.isBestseller,
 });
 
-export const useProducts = () => {
+export interface ProductsResult {
+  products: Product[];
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export const useProducts = (params: ProductsParams = {}) => {
   return useQuery({
-    queryKey: ['products'],
-    queryFn: async () => {
+    queryKey: ['products', params],
+    queryFn: async (): Promise<ProductsResult> => {
       try {
-        const apiProducts = await api.getProducts();
-        return apiProducts.map(mapApiProduct);
+        const response: ProductsResponse = await api.getProducts(params);
+        return {
+          products: response.products.map(mapApiProduct),
+          total: response.total,
+          page: response.page,
+          pages: response.pages,
+          limit: response.limit,
+          hasMore: response.hasMore,
+        };
       } catch (error) {
         console.warn('API not available, using fallback data');
-        return fallbackProducts;
+        // Apply basic filtering/pagination to fallback data
+        let filtered = [...fallbackProducts];
+        
+        if (params.category) {
+          filtered = filtered.filter(p => p.category === params.category);
+        }
+        if (params.isNew !== undefined) {
+          filtered = filtered.filter(p => p.isNew === params.isNew);
+        }
+        if (params.isBestseller !== undefined) {
+          filtered = filtered.filter(p => p.isBestseller === params.isBestseller);
+        }
+        if (params.minPrice !== undefined) {
+          filtered = filtered.filter(p => (p.discountPrice || p.price) >= params.minPrice!);
+        }
+        if (params.maxPrice !== undefined) {
+          filtered = filtered.filter(p => (p.discountPrice || p.price) <= params.maxPrice!);
+        }
+        if (params.search) {
+          const searchLower = params.search.toLowerCase();
+          filtered = filtered.filter(p => 
+            p.name.toLowerCase().includes(searchLower) || 
+            p.brand.toLowerCase().includes(searchLower)
+          );
+        }
+
+        // Sort
+        if (params.sort) {
+          switch (params.sort) {
+            case 'price_asc':
+              filtered.sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
+              break;
+            case 'price_desc':
+              filtered.sort((a, b) => (b.discountPrice || b.price) - (a.discountPrice || a.price));
+              break;
+            case 'rating':
+              filtered.sort((a, b) => b.rating - a.rating);
+              break;
+            case 'popularity':
+              filtered.sort((a, b) => b.reviewCount - a.reviewCount);
+              break;
+          }
+        }
+
+        const total = filtered.length;
+        const limit = params.limit || 9;
+        const page = params.page || 1;
+        const pages = Math.ceil(total / limit);
+        const start = (page - 1) * limit;
+        const paginatedProducts = filtered.slice(start, start + limit);
+
+        return {
+          products: paginatedProducts,
+          total,
+          page,
+          pages,
+          limit,
+          hasMore: page < pages,
+        };
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 };

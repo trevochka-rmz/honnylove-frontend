@@ -3,8 +3,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { brands, categories } from '@/data/products';
+import { categories } from '@/data/products';
 import { Separator } from '@/components/ui/separator';
+import { useAllBrands } from '@/hooks/useBrands';
+import { Loader2 } from 'lucide-react';
 
 interface FilterSidebarProps {
   selectedBrands: string[];
@@ -26,6 +28,7 @@ export const FilterSidebar = ({
   onReset,
 }: FilterSidebarProps) => {
   const [localPriceRange, setLocalPriceRange] = useState(priceRange);
+  const { data: brands = [], isLoading: brandsLoading } = useAllBrands();
 
   const handlePriceChange = (value: number[]) => {
     setLocalPriceRange([value[0], value[1]]);
@@ -70,20 +73,26 @@ export const FilterSidebar = ({
       {/* Brands */}
       <div>
         <h4 className="font-roboto font-medium mb-3">Бренды</h4>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {brands.map((brand) => (
-            <div key={brand} className="flex items-center space-x-2">
-              <Checkbox
-                id={`brand-${brand}`}
-                checked={selectedBrands.includes(brand)}
-                onCheckedChange={() => onBrandChange(brand)}
-              />
-              <Label htmlFor={`brand-${brand}`} className="text-sm font-roboto cursor-pointer">
-                {brand}
-              </Label>
-            </div>
-          ))}
-        </div>
+        {brandsLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {brands.map((brand) => (
+              <div key={brand.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`brand-${brand.id}`}
+                  checked={selectedBrands.includes(brand.name)}
+                  onCheckedChange={() => onBrandChange(brand.name)}
+                />
+                <Label htmlFor={`brand-${brand.id}`} className="text-sm font-roboto cursor-pointer">
+                  {brand.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Separator />
@@ -94,7 +103,7 @@ export const FilterSidebar = ({
         <div className="space-y-4">
           <Slider
             min={0}
-            max={5000}
+            max={10000}
             step={100}
             value={localPriceRange}
             onValueChange={handlePriceChange}

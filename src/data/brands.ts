@@ -3,11 +3,12 @@ export interface Brand {
   name: string;
   logo: string;
   description: string;
-  fullDescription: string;
+  fullDescription?: string;
   country: string;
   founded: string;
   philosophy: string;
   highlights: string[];
+  productsCount?: number;
 }
 
 export const brands: Brand[] = [
