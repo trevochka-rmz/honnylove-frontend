@@ -1,15 +1,28 @@
 import { Link, useParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { getBrandById } from "@/data/brands";
-import { products } from "@/data/products";
+import { useBrand } from "@/hooks/useBrands";
+import { useProducts } from "@/hooks/useProducts";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, MapPin, Calendar, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Calendar, Sparkles, Loader2 } from "lucide-react";
 
 const BrandDetail = () => {
   const { brandId } = useParams<{ brandId: string }>();
-  const brand = getBrandById(brandId || "");
+  const { data: brand, isLoading: brandLoading } = useBrand(brandId || "");
+  const { data: products = [] } = useProducts();
+
+  if (brandLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   if (!brand) {
     return (
@@ -32,7 +45,7 @@ const BrandDetail = () => {
 
   // Get products for this brand
   const brandProducts = products.filter(
-    p => p.brand.toLowerCase().replace(/\s/g, '') === brand.id
+    p => p.brand === brand.name
   ).slice(0, 4);
 
   return (
@@ -53,7 +66,7 @@ const BrandDetail = () => {
         <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-background rounded-3xl p-8 md:p-12 mb-12">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="w-32 h-32 md:w-40 md:h-40 bg-background rounded-full flex items-center justify-center text-6xl md:text-7xl shadow-lg">
-              {brand.logo}
+              {brand.logo === '/placeholder.svg' ? '🧴' : brand.logo}
             </div>
             <div className="text-center md:text-left flex-1">
               <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">

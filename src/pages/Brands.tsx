@@ -1,16 +1,32 @@
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { products } from "@/data/products";
-import { brands } from "@/data/brands";
-
-// Count products for each brand
-const brandsWithCounts = brands.map(brand => ({
-  ...brand,
-  productsCount: products.filter(p => p.brand.toLowerCase().replace(/\s/g, '') === brand.id).length
-}));
+import { useBrands } from "@/hooks/useBrands";
+import { useProducts } from "@/hooks/useProducts";
+import { Loader2 } from "lucide-react";
 
 const Brands = () => {
+  const { data: brands = [], isLoading: brandsLoading } = useBrands();
+  const { data: products = [] } = useProducts();
+
+  // Count products for each brand
+  const brandsWithCounts = brands.map(brand => ({
+    ...brand,
+    productsCount: products.filter(p => p.brand === brand.name).length
+  }));
+
+  if (brandsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -37,12 +53,12 @@ const Brands = () => {
             >
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 bg-secondary rounded-full flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
-                  {brand.logo}
+                  {brand.logo === '/placeholder.svg' ? '🧴' : brand.logo}
                 </div>
                 <h3 className="font-playfair text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                   {brand.name}
                 </h3>
-                <p className="text-muted-foreground text-sm mb-3">
+                <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
                   {brand.description}
                 </p>
                 <span className="inline-block bg-primary/10 text-primary text-xs px-3 py-1 rounded-full">

@@ -6,19 +6,37 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { products } from '@/data/products';
+import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useCartStore } from '@/store/cartStore';
-import { Heart, ShoppingCart, Star, ChevronLeft } from 'lucide-react';
+import { Heart, ShoppingCart, Star, ChevronLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find((p) => p.id === id);
+  const { data: product, isLoading } = useProduct(id || '');
+  const { data: allProducts = [] } = useProducts();
   const addItem = useCartStore((state) => state.addItem);
 
-  const [selectedVariant, setSelectedVariant] = useState(product?.variants?.[0]?.value || '');
+  const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);
+
+  // Set initial variant when product loads
+  if (product && !selectedVariant && product.variants?.[0]?.value) {
+    setSelectedVariant(product.variants[0].value);
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -35,7 +53,7 @@ const ProductDetail = () => {
     );
   }
 
-  const relatedProducts = products
+  const relatedProducts = allProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
