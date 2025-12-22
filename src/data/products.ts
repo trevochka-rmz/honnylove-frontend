@@ -2,8 +2,8 @@ export interface Product {
   id: string;
   name: string;
   brand: string;
-  category: 'face' | 'body' | 'makeup' | 'pajamas' | 'accessories';
-  subcategory: string;
+  category: string;
+  subcategory?: string;
   price: number;
   discountPrice?: number;
   image: string;

@@ -3,24 +3,29 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
-import { products } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 const Catalog = () => {
   const [searchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
+  const brandParam = searchParams.get('brand');
   const newParam = searchParams.get('new');
   const bestsellerParam = searchParams.get('bestseller');
 
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const { data: products = [], isLoading } = useProducts();
+
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(
+    brandParam ? [brandParam] : []
+  );
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     categoryParam ? [categoryParam] : []
   );
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<string>('popular');
 
   const handleBrandChange = (brand: string) => {
@@ -88,7 +93,19 @@ const Catalog = () => {
     }
 
     return filtered;
-  }, [selectedBrands, selectedCategories, priceRange, sortBy, newParam, bestsellerParam]);
+  }, [products, selectedBrands, selectedCategories, priceRange, sortBy, newParam, bestsellerParam]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const filterSidebar = (
     <FilterSidebar
