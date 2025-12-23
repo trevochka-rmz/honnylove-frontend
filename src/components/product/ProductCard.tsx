@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Product } from '@/data/products';
 import { useCartStore } from '@/store/cartStore';
+import { useFavoritesStore } from '@/store/favoritesStore';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -12,13 +14,23 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product }: ProductCardProps) => {
+  const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
+  const { toggleFavorite, isFavorite } = useFavoritesStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  const isInFavorites = isFavorite(product.id);
   const discount = product.discountPrice
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast.info('Войдите в аккаунт, чтобы добавить товар в корзину');
+      navigate('/auth');
+      return;
+    }
     addItem({
       id: product.id,
       name: product.name,
@@ -28,6 +40,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       variant: product.variants?.[0]?.value,
     });
     toast.success('Товар добавлен в корзину');
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.info('Войдите в аккаунт, чтобы добавить в избранное');
+      navigate('/auth');
+      return;
+    }
+    toggleFavorite(product.id);
+    toast.success(isInFavorites ? 'Удалено из избранного' : 'Добавлено в избранное');
   };
 
   return (
@@ -58,13 +81,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 bg-background/80 hover:bg-background"
-            onClick={(e) => {
-              e.preventDefault();
-              toast.success('Добавлено в избранное');
-            }}
+            className={`absolute top-3 right-3 bg-background/80 hover:bg-background ${
+              isInFavorites ? 'text-primary' : ''
+            }`}
+            onClick={handleToggleFavorite}
           >
-            <Heart className="h-4 w-4" />
+            <Heart className={`h-4 w-4 ${isInFavorites ? 'fill-current' : ''}`} />
           </Button>
         </div>
 

@@ -1,13 +1,22 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, Menu } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCartStore } from '@/store/cartStore';
+import { useAuthStore } from '@/store/authStore';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const Header = () => {
   const totalItems = useCartStore((state) => state.getTotalItems());
+  const { isAuthenticated, user, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
 
   const navigation = [
@@ -77,17 +86,56 @@ export const Header = () => {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
-              <Link to="/favorites">
+              <Link to={isAuthenticated ? "/favorites" : "/auth"}>
                 <Heart className="h-5 w-5" />
               </Link>
             </Button>
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/auth">
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
+            
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user?.username}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Профиль
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/favorites" className="cursor-pointer">
+                      <Heart className="mr-2 h-4 w-4" />
+                      Избранное
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={logout}
+                    className="cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Выйти
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/auth">
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
+            )}
+            
             <Button variant="ghost" size="icon" asChild className="relative">
-              <Link to="/cart">
+              <Link to={isAuthenticated ? "/cart" : "/auth"}>
                 <ShoppingCart className="h-5 w-5" />
                 {totalItems > 0 && (
                   <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-roboto font-medium">

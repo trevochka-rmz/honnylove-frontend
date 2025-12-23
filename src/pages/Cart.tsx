@@ -3,12 +3,25 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCartStore } from '@/store/cartStore';
+import { useAuthStore } from '@/store/authStore';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const Cart = () => {
   const { items, updateQuantity, removeItem, getTotalPrice } = useCartStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/auth");
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (items.length === 0) {
     return (

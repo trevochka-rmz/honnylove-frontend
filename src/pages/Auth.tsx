@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { api } from "@/services/api";
+import { useAuthStore } from "@/store/authStore";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,14 +17,21 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { setAuth, isAuthenticated } = useAuthStore();
 
   const [formData, setFormData] = useState({
-    name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
   });
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    navigate("/profile");
+    return null;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -45,6 +54,15 @@ const Auth = () => {
     }
 
     if (!isLogin) {
+      if (!formData.username) {
+        toast({
+          title: "Ошибка",
+          description: "Введите имя пользователя",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
       if (formData.password !== formData.confirmPassword) {
         toast({
           title: "Ошибка",
@@ -65,23 +83,38 @@ const Auth = () => {
       }
     }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    toast({
-      title: isLogin ? "Добро пожаловать!" : "Регистрация успешна!",
-      description: isLogin 
-        ? "Вы успешно вошли в аккаунт" 
-        : "Аккаунт создан. Теперь вы можете войти",
-    });
-
-    setIsLoading(false);
-    
-    if (!isLogin) {
-      setIsLogin(true);
-      setFormData({ name: "", email: "", password: "", confirmPassword: "", agreeToTerms: false });
-    } else {
-      navigate("/");
+    try {
+      if (isLogin) {
+        // Login
+        const response = await api.login(formData.email, formData.password);
+        setAuth(response.user, response.accessToken, response.refreshToken);
+        toast({
+          title: "Добро пожаловать!",
+          description: "Вы успешно вошли в аккаунт",
+        });
+        navigate("/profile");
+      } else {
+        // Register
+        const response = await api.register({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        });
+        setAuth(response.user, response.accessToken, response.refreshToken);
+        toast({
+          title: "Регистрация успешна!",
+          description: "Аккаунт создан и вы вошли в систему",
+        });
+        navigate("/profile");
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: error instanceof Error ? error.message : "Произошла ошибка",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -131,15 +164,15 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="name">Имя</Label>
+                <Label htmlFor="username">Имя пользователя</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <Input
-                    id="name"
-                    name="name"
+                    id="username"
+                    name="username"
                     type="text"
                     placeholder="Ваше имя"
-                    value={formData.name}
+                    value={formData.username}
                     onChange={handleChange}
                     className="pl-10"
                   />
