@@ -143,4 +143,58 @@ export const api = {
     if (!response.ok) throw new Error('Failed to fetch brand');
     return response.json();
   },
+
+  // Auth endpoints
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Неверный email или пароль');
+    }
+    return response.json();
+  },
+
+  async register(data: RegisterData): Promise<AuthResponse> {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Ошибка регистрации');
+    }
+    return response.json();
+  },
 };
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  role: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  refresh_token?: string | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+}

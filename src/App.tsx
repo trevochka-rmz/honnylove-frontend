@@ -13,6 +13,7 @@ import BrandDetail from "./pages/BrandDetail";
 import Sales from "./pages/Sales";
 import Favorites from "./pages/Favorites";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/sales" element={<Sales />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

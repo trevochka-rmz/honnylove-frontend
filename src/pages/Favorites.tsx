@@ -1,14 +1,28 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useFavoritesStore } from "@/store/favoritesStore";
+import { useAuthStore } from "@/store/authStore";
 import { products } from "@/data/products";
 import { Heart, ShoppingBag } from "lucide-react";
+import { useEffect } from "react";
 
 const Favorites = () => {
+  const navigate = useNavigate();
   const { favorites, clearFavorites } = useFavoritesStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/auth");
+    }
+  }, [isAuthenticated, navigate]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
   
   const favoriteProducts = products.filter(p => favorites.includes(p.id));
 
