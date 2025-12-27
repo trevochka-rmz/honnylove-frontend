@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, User, Search, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCartStore } from '@/store/cartStore';
+import { useCartApiStore } from '@/store/cartApiStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -15,9 +16,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export const Header = () => {
-  const totalItems = useCartStore((state) => state.getTotalItems());
+  const { getTotalItems, fetchCart } = useCartApiStore();
+  const { items: wishlistItems, fetchWishlist } = useWishlistStore();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch cart and wishlist on auth change
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCart();
+      fetchWishlist();
+    }
+  }, [isAuthenticated, fetchCart, fetchWishlist]);
+
+  const totalItems = getTotalItems();
+  const wishlistCount = wishlistItems.length;
 
   const navigation = [
     { name: 'Категории', href: '/catalog' },
