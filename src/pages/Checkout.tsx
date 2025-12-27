@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -7,12 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { useCartStore } from '@/store/cartStore';
+import { Badge } from '@/components/ui/badge';
+import { useCartApiStore } from '@/store/cartApiStore';
+import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const Checkout = () => {
-  const { items, getTotalPrice, clearCart } = useCartStore();
+  const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -26,26 +31,59 @@ const Checkout = () => {
     paymentMethod: 'card',
   });
 
-  const totalPrice = getTotalPrice();
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    } else {
+      fetchCart();
+      // Pre-fill form with user data
+      if (user) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username,
+          email: user.email,
+          phone: user.phone || '',
+          address: user.address || '',
+        }));
+      }
+    }
+  }, [isAuthenticated, navigate, fetchCart, user]);
+
+  // Filter only in-stock items
+  const availableItems = items.filter(item => item.inStock && !item.outOfStock);
+
+  const totalPrice = availableItems.reduce((sum, item) => sum + item.subtotal, 0);
   const deliveryFee = totalPrice >= 3000 ? 0 : 300;
   const finalTotal = totalPrice + deliveryFee;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
     if (!formData.name || !formData.phone || !formData.address || !formData.city) {
       toast.error('Пожалуйста, заполните все обязательные поля');
       return;
     }
 
-    // Simulate order processing
     toast.success('Заказ успешно оформлен!');
-    clearCart();
+    await clearCart();
     navigate('/');
   };
 
-  if (items.length === 0) {
+  if (!isAuthenticated) return null;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (availableItems.length === 0) {
     navigate('/cart');
     return null;
   }
@@ -198,26 +236,23 @@ const Checkout = () => {
                 <CardContent className="space-y-4">
                   {/* Items */}
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {items.map((item) => (
-                      <div key={`${item.id}-${item.variant}`} className="flex gap-3">
+                    {availableItems.map((item) => (
+                      <div key={item.id} className="flex gap-3">
                         <div className="w-12 h-12 rounded bg-muted overflow-hidden flex-shrink-0">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.product.image}
+                            alt={item.product.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-roboto line-clamp-1">{item.name}</p>
+                          <p className="text-sm font-roboto line-clamp-1">{item.product.name}</p>
                           <p className="text-xs text-muted-foreground font-roboto">
                             {item.quantity} шт.
                           </p>
                         </div>
                         <div className="text-sm font-roboto font-medium">
-                          {((item.discountPrice || item.price) * item.quantity).toLocaleString(
-                            'ru-RU'
-                          )}{' '}
-                          ₽
+                          {item.subtotal.toLocaleString('ru-RU')} ₽
                         </div>
                       </div>
                     ))}

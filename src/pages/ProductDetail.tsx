@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -7,26 +7,44 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProduct, useProducts } from '@/hooks/useProducts';
-import { useCartStore } from '@/store/cartStore';
-import { Heart, ShoppingCart, Star, ChevronLeft, Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { useWishlistStore } from '@/store/wishlistStore';
+import { useCartApiStore } from '@/store/cartApiStore';
+import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(id || '');
   const { data: allProductsData } = useProducts({ limit: 50 });
-  const addItem = useCartStore((state) => state.addItem);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { addToWishlist, removeFromWishlist, isFavorite } = useWishlistStore();
+  const { addToCart } = useCartApiStore();
 
   const allProducts = allProductsData?.products || [];
 
   const [selectedVariant, setSelectedVariant] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  // Get all images
+  const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean) : [];
 
   // Set initial variant when product loads
-  if (product && !selectedVariant && product.variants?.[0]?.value) {
-    setSelectedVariant(product.variants[0].value);
-  }
+  useEffect(() => {
+    if (product && !selectedVariant && product.variants?.[0]?.value) {
+      setSelectedVariant(product.variants[0].value);
+    }
+  }, [product, selectedVariant]);
+
+  // Reset image index when product changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -55,6 +73,8 @@ const ProductDetail = () => {
     );
   }
 
+  const isInFavorites = isFavorite(product.id);
+
   const relatedProducts = allProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
@@ -63,18 +83,61 @@ const ProductDetail = () => {
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        discountPrice: product.discountPrice,
-        image: product.image,
-        variant: selectedVariant,
-      });
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.info('Войдите в аккаунт, чтобы добавить товар в корзину');
+      navigate('/auth');
+      return;
     }
-    toast.success(`Добавлено в корзину: ${quantity} шт.`);
+
+    setIsAddingToCart(true);
+    try {
+      const success = await addToCart(parseInt(product.id), quantity);
+      if (success) {
+        toast.success(`Добавлено в корзину: ${quantity} шт.`);
+      } else {
+        toast.error('Не удалось добавить товар в корзину');
+      }
+    } catch (error) {
+      toast.error('Ошибка при добавлении в корзину');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      toast.info('Войдите в аккаунт, чтобы добавить в избранное');
+      navigate('/auth');
+      return;
+    }
+
+    setIsTogglingFavorite(true);
+    try {
+      if (isInFavorites) {
+        const success = await removeFromWishlist(parseInt(product.id));
+        if (success) {
+          toast.success('Удалено из избранного');
+        }
+      } else {
+        const success = await addToWishlist(parseInt(product.id));
+        if (success) {
+          toast.success('Добавлено в избранное');
+        }
+      }
+    } catch (error) {
+      toast.error('Ошибка при обновлении избранного');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+
+  const handlePrevImage = () => {
+    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+  };
+
+  const handleNextImage = () => {
+    setSelectedImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
   };
 
   return (
@@ -105,10 +168,52 @@ const ProductDetail = () => {
         {/* Product Details */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
           {/* Images */}
-          <div>
-            <div className="relative aspect-square rounded-xl overflow-hidden bg-muted mb-4">
+          <div className="flex gap-4">
+            {/* Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex flex-col gap-2 w-20">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 mx-auto"
+                  onClick={handlePrevImage}
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto scrollbar-thin">
+                  {allImages.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                        index === selectedImageIndex
+                          ? 'border-primary'
+                          : 'border-transparent hover:border-muted-foreground/50'
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 mx-auto"
+                  onClick={handleNextImage}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Main Image */}
+            <div className="flex-1 relative aspect-square rounded-xl overflow-hidden bg-muted">
               <img
-                src={product.image}
+                src={allImages[selectedImageIndex] || product.image}
                 alt={product.name}
                 className="object-cover w-full h-full"
               />
@@ -212,7 +317,7 @@ const ProductDetail = () => {
                 className="flex-1 font-roboto"
                 size="lg"
                 onClick={handleAddToCart}
-                disabled={!product.inStock}
+                disabled={!product.inStock || isAddingToCart}
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
                 {product.inStock ? 'Добавить в корзину' : 'Нет в наличии'}
@@ -220,16 +325,21 @@ const ProductDetail = () => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => toast.success('Добавлено в избранное')}
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite}
+                className={isInFavorites ? 'text-primary border-primary' : ''}
               >
-                <Heart className="h-5 w-5" />
+                <Heart className={`h-5 w-5 ${isInFavorites ? 'fill-current' : ''}`} />
               </Button>
             </div>
 
-            {/* Description */}
-            <p className="text-sm font-roboto text-foreground/80 leading-relaxed">
-              {product.description}
-            </p>
+            {/* Description label */}
+            <div className="border-t border-border pt-6">
+              <h3 className="font-playfair font-semibold text-lg mb-3">Описание</h3>
+              <p className="text-sm font-roboto text-foreground/80 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
           </div>
         </div>
 

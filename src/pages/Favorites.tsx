@@ -1,30 +1,67 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Button } from "@/components/ui/button";
-import { useFavoritesStore } from "@/store/favoritesStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
-import { products } from "@/data/products";
-import { Heart, ShoppingBag } from "lucide-react";
-import { useEffect } from "react";
+import { Heart, ShoppingBag, Loader2 } from "lucide-react";
 
 const Favorites = () => {
   const navigate = useNavigate();
-  const { favorites, clearFavorites } = useFavoritesStore();
+  const { items, isLoading, fetchWishlist, clearWishlist } = useWishlistStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth");
+    } else {
+      fetchWishlist();
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, fetchWishlist]);
 
   if (!isAuthenticated) {
     return null;
   }
-  
-  const favoriteProducts = products.filter(p => favorites.includes(p.id));
+
+  // Map wishlist items to Product format for ProductCard
+  const favoriteProducts = items.map((item) => ({
+    id: item.product.id,
+    name: item.product.name,
+    brand: item.product.brand,
+    category: item.product.category,
+    subcategory: item.product.subcategory,
+    price: parseFloat(item.product.price),
+    discountPrice: item.product.discountPrice ? parseFloat(item.product.discountPrice) : undefined,
+    image: item.product.image,
+    images: item.product.images,
+    description: item.product.description,
+    ingredients: item.product.ingredients,
+    usage: item.product.usage,
+    rating: parseFloat(item.product.rating),
+    reviewCount: item.product.reviewCount,
+    variants: item.product.variants,
+    inStock: item.product.inStock,
+    isNew: item.product.isNew,
+    isBestseller: item.product.isBestseller,
+  }));
+
+  const handleClearWishlist = async () => {
+    await clearWishlist();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,7 +81,7 @@ const Favorites = () => {
             </p>
           </div>
           {favoriteProducts.length > 0 && (
-            <Button variant="outline" onClick={clearFavorites}>
+            <Button variant="outline" onClick={handleClearWishlist}>
               Очистить всё
             </Button>
           )}
@@ -65,7 +102,7 @@ const Favorites = () => {
               В избранном пока ничего нет
             </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Добавляйте товары в избранное, нажимая на сердечко ❤️ на карточке товара, 
+              Добавляйте товары в избранное, нажимая на сердечко на карточке товара, 
               чтобы не потерять их
             </p>
             <Link to="/catalog">
@@ -79,10 +116,10 @@ const Favorites = () => {
 
         {favoriteProducts.length > 0 && (
           <div className="mt-12 bg-secondary/30 rounded-2xl p-6 text-center">
-            <h3 className="font-semibold text-lg mb-2">💡 Подсказка</h3>
+            <h3 className="font-semibold text-lg mb-2">Подсказка</h3>
             <p className="text-muted-foreground">
-              Товары в избранном сохраняются автоматически. 
-              Вы можете вернуться к ним в любое время!
+              Товары в избранном синхронизируются с вашим аккаунтом. 
+              Вы можете вернуться к ним с любого устройства!
             </p>
           </div>
         )}

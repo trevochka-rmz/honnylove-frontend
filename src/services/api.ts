@@ -84,6 +84,81 @@ export interface BrandsParams {
   filter?: 'featured' | 'popular' | 'new';
 }
 
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  role: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  refresh_token?: string | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+}
+
+// Wishlist types
+export interface WishlistItem {
+  id: number;
+  user_id: number;
+  product_id: number;
+  created_at: string;
+  product: ApiProduct;
+}
+
+// Cart types
+export interface CartItemApi {
+  id: number;
+  user_id: number;
+  product_id: number;
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  product: ApiProduct;
+  inStock: boolean;
+  availableQuantity: string;
+  isLowStock: boolean;
+  outOfStock: boolean;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export interface CartResponse {
+  items: CartItemApi[];
+  summary: {
+    itemsTotal: number;
+    subtotal: number;
+    shipping: number;
+    total: number;
+  };
+  hasItems: boolean;
+}
+
+export interface CartUpdateResponse {
+  message: string;
+  item: CartItemApi;
+  cartSummary: {
+    itemsTotal: number;
+    subtotal: number;
+    shipping: number;
+    total: number;
+  };
+}
+
 export const api = {
   async getProducts(params: ProductsParams = {}): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
@@ -170,31 +245,111 @@ export const api = {
     }
     return response.json();
   },
+
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!response.ok) throw new Error('Failed to refresh token');
+    return response.json();
+  },
+
+  // Wishlist endpoints
+  async getWishlist(token: string): Promise<WishlistItem[]> {
+    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to fetch wishlist');
+    return response.json();
+  },
+
+  async addToWishlist(token: string, productId: number): Promise<WishlistItem> {
+    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ product_id: productId }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to add to wishlist');
+    }
+    return response.json();
+  },
+
+  async removeFromWishlist(token: string, productId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to remove from wishlist');
+  },
+
+  async clearWishlist(token: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to clear wishlist');
+  },
+
+  // Cart endpoints
+  async getCart(token: string): Promise<CartResponse> {
+    const response = await fetch(`${API_BASE_URL}/cart`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to fetch cart');
+    return response.json();
+  },
+
+  async addToCart(token: string, productId: number, quantity: number = 1): Promise<CartItemApi> {
+    const response = await fetch(`${API_BASE_URL}/cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ product_id: productId, quantity }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to add to cart');
+    }
+    return response.json();
+  },
+
+  async updateCartItem(token: string, cartItemId: number, quantity: number): Promise<CartUpdateResponse> {
+    const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ quantity }),
+    });
+    if (!response.ok) throw new Error('Failed to update cart item');
+    return response.json();
+  },
+
+  async removeFromCart(token: string, cartItemId: number): Promise<{ message: string; cartSummary: any }> {
+    const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to remove from cart');
+    return response.json();
+  },
+
+  async clearCart(token: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/cart`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to clear cart');
+    return response.json();
+  },
 };
-
-export interface AuthUser {
-  id: number;
-  username: string;
-  email: string;
-  role: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  address: string | null;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  refresh_token?: string | null;
-}
-
-export interface AuthResponse {
-  user: AuthUser;
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-}
