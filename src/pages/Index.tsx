@@ -2,15 +2,19 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSlider } from '@/components/home/HeroSlider';
 import { ProductCard } from '@/components/product/ProductCard';
-import { products } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Sparkles, TrendingUp, Star } from 'lucide-react';
+import { Sparkles, TrendingUp, Star, Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const newProducts = products.filter((p) => p.isNew).slice(0, 4);
-  const saleProducts = products.filter((p) => p.discountPrice).slice(0, 4);
-  const bestsellers = products.filter((p) => p.isBestseller).slice(0, 4);
+  const { data: newProductsData, isLoading: isLoadingNew } = useProducts({ isNew: true, limit: 4 });
+  const { data: saleProductsData, isLoading: isLoadingSale } = useProducts({ isOnSale: true, limit: 4 });
+  const { data: bestsellersData, isLoading: isLoadingBestsellers } = useProducts({ isBestseller: true, limit: 4 });
+
+  const newProducts = newProductsData?.products || [];
+  const saleProducts = saleProductsData?.products || [];
+  const bestsellers = bestsellersData?.products || [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -33,11 +37,17 @@ const Index = () => {
               <Link to="/catalog?new=true">Смотреть все</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoadingNew ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Sale Products */}
@@ -52,11 +62,17 @@ const Index = () => {
                 <Link to="/sales">Все акции</Link>
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {saleProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {isLoadingSale ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {saleProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -71,11 +87,17 @@ const Index = () => {
               <Link to="/catalog?bestseller=true">Смотреть все</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestsellers.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {isLoadingBestsellers ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {bestsellers.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Categories Banner */}
@@ -85,11 +107,11 @@ const Index = () => {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { name: 'Уход за лицом', link: '/catalog?category=face', emoji: '✨' },
-              { name: 'Уход за телом', link: '/catalog?category=body', emoji: '💆' },
-              { name: 'Декоративная косметика', link: '/catalog?category=makeup', emoji: '💄' },
-              { name: 'Пижамы и халаты', link: '/catalog?category=pajamas', emoji: '🌙' },
-              { name: 'Аксессуары', link: '/catalog?category=accessories', emoji: '🎀' },
+              { name: 'Уход за лицом', link: '/catalog?categoryId=1', emoji: '✨' },
+              { name: 'Макияж', link: '/catalog?categoryId=23', emoji: '💄' },
+              { name: 'Уход за телом', link: '/catalog?categoryId=34', emoji: '💆' },
+              { name: 'Пищевые добавки', link: '/catalog?categoryId=38', emoji: '💊' },
+              { name: 'Одежда', link: '/catalog?categoryId=42', emoji: '🌙' },
               { name: 'Все товары', link: '/catalog', emoji: '🛍️' },
             ].map((cat) => (
               <Link

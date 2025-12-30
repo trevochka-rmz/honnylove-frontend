@@ -36,6 +36,7 @@ export const Header = () => {
     { name: 'Категории', href: '/catalog' },
     { name: 'Бренды', href: '/brands' },
     { name: 'Акции', href: '/sales' },
+    { name: 'Доставка', href: '/delivery' },
     { name: 'Блог', href: '/blog' },
   ];
 

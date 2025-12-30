@@ -4,12 +4,13 @@ import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
 import { useProducts, ProductsResult } from '@/hooks/useProducts';
-import { ProductsParams } from '@/services/api';
+import { useAllCategories, useCategory } from '@/hooks/useCategories';
+import { ProductsParams, ApiCategory } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { SlidersHorizontal, Loader2 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { SlidersHorizontal, Loader2, ChevronRight } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
   Pagination,
   PaginationContent,
@@ -22,23 +23,63 @@ import {
 
 const ITEMS_PER_PAGE = 9;
 
+// Subcategory card component
+const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="group flex flex-col items-center p-4 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300"
+  >
+    <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-secondary">
+      <img
+        src={category.image_url}
+        alt={category.name}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = '/placeholder.svg';
+        }}
+      />
+    </div>
+    <span className="text-sm font-medium text-center group-hover:text-primary transition-colors">
+      {category.name}
+    </span>
+  </button>
+);
+
 const Catalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get('category');
-  const brandParam = searchParams.get('brand');
+  const categoryIdParam = searchParams.get('categoryId');
+  const brandIdParam = searchParams.get('brandId');
   const newParam = searchParams.get('new');
   const bestsellerParam = searchParams.get('bestseller');
   const pageParam = searchParams.get('page');
 
   const [currentPage, setCurrentPage] = useState(pageParam ? parseInt(pageParam) : 1);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>(
-    brandParam ? [brandParam] : []
+  const [selectedBrandIds, setSelectedBrandIds] = useState<number[]>(
+    brandIdParam ? [parseInt(brandIdParam)] : []
   );
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    categoryParam ? [categoryParam] : []
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    categoryIdParam ? parseInt(categoryIdParam) : null
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<string>('id_desc');
+
+  // Fetch all categories for navigation
+  const { data: allCategories = [] } = useAllCategories();
+  
+  // Fetch current category details for subcategories
+  const { data: currentCategoryData } = useCategory(selectedCategoryId);
+
+  // Update from URL params
+  useEffect(() => {
+    if (categoryIdParam) {
+      setSelectedCategoryId(parseInt(categoryIdParam));
+      setCurrentPage(1);
+    }
+    if (brandIdParam) {
+      setSelectedBrandIds([parseInt(brandIdParam)]);
+      setCurrentPage(1);
+    }
+  }, [categoryIdParam, brandIdParam]);
 
   // Map frontend sort values to API sort values
   const getSortParam = (sort: string): ProductsParams['sort'] => {
@@ -59,8 +100,11 @@ const Catalog = () => {
     sort: getSortParam(sortBy),
   };
 
-  if (selectedCategories.length === 1) {
-    apiParams.category = selectedCategories[0];
+  if (selectedCategoryId) {
+    apiParams.categoryId = selectedCategoryId;
+  }
+  if (selectedBrandIds.length === 1) {
+    apiParams.brandId = selectedBrandIds[0];
   }
   if (newParam === 'true') {
     apiParams.isNew = true;
@@ -86,30 +130,30 @@ const Catalog = () => {
     hasMore: false,
   };
 
-  // Filter by brand on client side (API supports single brandId, we support multiple brand names)
-  const filteredProducts = selectedBrands.length > 0
-    ? result.products.filter(p => selectedBrands.includes(p.brand))
-    : result.products;
-
-  const handleBrandChange = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+  const handleBrandChange = (brandId: number) => {
+    setSelectedBrandIds((prev) =>
+      prev.includes(brandId) ? prev.filter((b) => b !== brandId) : [...prev, brandId]
     );
     setCurrentPage(1);
   };
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
+  const handleCategorySelect = (categoryId: number | null) => {
+    setSelectedCategoryId(categoryId);
     setCurrentPage(1);
+    if (categoryId) {
+      setSearchParams({ categoryId: categoryId.toString() });
+    } else {
+      searchParams.delete('categoryId');
+      setSearchParams(searchParams);
+    }
   };
 
   const handleReset = () => {
-    setSelectedBrands([]);
-    setSelectedCategories([]);
+    setSelectedBrandIds([]);
+    setSelectedCategoryId(null);
     setPriceRange([0, 10000]);
     setCurrentPage(1);
+    setSearchParams({});
   };
 
   const handlePageChange = (page: number) => {
@@ -121,6 +165,34 @@ const Catalog = () => {
     setSortBy(value);
     setCurrentPage(1);
   };
+
+  // Get breadcrumb path for current category
+  const getBreadcrumbPath = (): ApiCategory[] => {
+    if (!selectedCategoryId || allCategories.length === 0) return [];
+    
+    const path: ApiCategory[] = [];
+    
+    const findCategory = (categories: ApiCategory[], targetId: number, currentPath: ApiCategory[]): boolean => {
+      for (const cat of categories) {
+        if (cat.id === targetId) {
+          path.push(...currentPath, cat);
+          return true;
+        }
+        if (cat.children && cat.children.length > 0) {
+          if (findCategory(cat.children, targetId, [...currentPath, cat])) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    
+    findCategory(allCategories, selectedCategoryId, []);
+    return path;
+  };
+
+  const breadcrumbPath = getBreadcrumbPath();
+  const subcategories = currentCategoryData?.children || [];
 
   // Generate pagination numbers
   const getPaginationNumbers = () => {
@@ -158,13 +230,14 @@ const Catalog = () => {
 
   const filterSidebar = (
     <FilterSidebar
-      selectedBrands={selectedBrands}
-      selectedCategories={selectedCategories}
+      selectedBrandIds={selectedBrandIds}
+      selectedCategoryId={selectedCategoryId}
       priceRange={priceRange}
       onBrandChange={handleBrandChange}
-      onCategoryChange={handleCategoryChange}
+      onCategoryChange={handleCategorySelect}
       onPriceChange={setPriceRange}
       onReset={handleReset}
+      categories={allCategories}
     />
   );
 
@@ -173,12 +246,57 @@ const Catalog = () => {
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        {breadcrumbPath.length > 0 && (
+          <nav className="flex items-center gap-2 text-sm mb-4 flex-wrap">
+            <button 
+              onClick={() => handleCategorySelect(null)}
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              Каталог
+            </button>
+            {breadcrumbPath.map((cat, index) => (
+              <div key={cat.id} className="flex items-center gap-2">
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <button
+                  onClick={() => handleCategorySelect(cat.id)}
+                  className={`transition-colors ${
+                    index === breadcrumbPath.length - 1 
+                      ? 'text-foreground font-medium' 
+                      : 'text-muted-foreground hover:text-primary'
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              </div>
+            ))}
+          </nav>
+        )}
+
         <div className="mb-6">
-          <h1 className="text-3xl font-playfair font-bold mb-2">Каталог</h1>
+          <h1 className="text-3xl font-playfair font-bold mb-2">
+            {currentCategoryData?.name || 'Каталог'}
+          </h1>
           <p className="text-muted-foreground font-roboto">
             Найдено товаров: {result.total}
           </p>
         </div>
+
+        {/* Subcategories */}
+        {subcategories.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-medium mb-4">Подкатегории</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+              {subcategories.map((subcat) => (
+                <SubcategoryCard
+                  key={subcat.id}
+                  category={subcat}
+                  onClick={() => handleCategorySelect(subcat.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Filters */}
@@ -223,10 +341,10 @@ const Catalog = () => {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length > 0 ? (
+            {result.products.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
+                  {result.products.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>

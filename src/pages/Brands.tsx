@@ -17,7 +17,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 15;
 
 const Brands = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,7 +146,7 @@ const Brands = () => {
         {/* Brands Grid */}
         {result.brands.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
               {result.brands.map((brand) => (
                 <Link
                   key={brand.id}
@@ -154,8 +154,19 @@ const Brands = () => {
                   className="group bg-card rounded-2xl p-6 border border-border hover:border-primary hover:shadow-lg transition-all duration-300"
                 >
                   <div className="text-center">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-secondary rounded-full flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
-                      {brand.logo === '/placeholder.svg' ? '🧴' : brand.logo}
+                    <div className="w-20 h-20 mx-auto mb-4 bg-secondary rounded-full overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform">
+                      {brand.logo ? (
+                        <img 
+                          src={brand.logo} 
+                          alt={brand.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-4xl">🧴</span>
+                      )}
                     </div>
                     <h3 className="font-playfair text-xl font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                       {brand.name}

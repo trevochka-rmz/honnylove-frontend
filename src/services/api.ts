@@ -37,6 +37,7 @@ export interface ProductsParams {
   page?: number;
   limit?: number;
   category?: string;
+  categoryId?: number;
   subcategoryId?: number;
   brandId?: number;
   search?: string;
@@ -45,7 +46,44 @@ export interface ProductsParams {
   isFeatured?: boolean;
   isNew?: boolean;
   isBestseller?: boolean;
+  isOnSale?: boolean;
   sort?: 'popularity' | 'price_asc' | 'price_desc' | 'rating' | 'new_random' | 'id_desc';
+}
+
+// Category types
+export interface ApiCategory {
+  id: number;
+  name: string;
+  slug: string;
+  image_url: string;
+  display_order: number;
+  product_count: string;
+  parent_id?: number | null;
+  children?: ApiCategory[];
+}
+
+export interface CategoriesAllResponse {
+  success: boolean;
+  data: ApiCategory[];
+}
+
+export interface CategoryDetailResponse {
+  success: boolean;
+  data: ApiCategory;
+}
+
+// Brand brief type for filters
+export interface BrandBrief {
+  id: number;
+  slug: string;
+  name: string;
+  logo: string;
+}
+
+export interface BrandsBriefResponse {
+  success: boolean;
+  count: number;
+  brands: BrandBrief[];
 }
 
 export interface ApiBrand {
@@ -166,6 +204,7 @@ export const api = {
     if (params.page) searchParams.append('page', params.page.toString());
     if (params.limit) searchParams.append('limit', params.limit.toString());
     if (params.category) searchParams.append('category', params.category);
+    if (params.categoryId) searchParams.append('categoryId', params.categoryId.toString());
     if (params.subcategoryId) searchParams.append('subcategoryId', params.subcategoryId.toString());
     if (params.brandId) searchParams.append('brandId', params.brandId.toString());
     if (params.search) searchParams.append('search', params.search);
@@ -174,6 +213,7 @@ export const api = {
     if (params.isFeatured !== undefined) searchParams.append('isFeatured', params.isFeatured.toString());
     if (params.isNew !== undefined) searchParams.append('isNew', params.isNew.toString());
     if (params.isBestseller !== undefined) searchParams.append('isBestseller', params.isBestseller.toString());
+    if (params.isOnSale !== undefined) searchParams.append('isOnSale', params.isOnSale.toString());
     if (params.sort) searchParams.append('sort', params.sort);
 
     const queryString = searchParams.toString();
@@ -216,6 +256,25 @@ export const api = {
   async getBrandById(id: string | number): Promise<ApiBrand> {
     const response = await fetch(`${API_BASE_URL}/brands/${id}`);
     if (!response.ok) throw new Error('Failed to fetch brand');
+    return response.json();
+  },
+
+  // Category endpoints
+  async getAllCategories(): Promise<CategoriesAllResponse> {
+    const response = await fetch(`${API_BASE_URL}/categories/all`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return response.json();
+  },
+
+  async getCategoryById(id: number): Promise<CategoryDetailResponse> {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch category');
+    return response.json();
+  },
+
+  async getBrandsBrief(): Promise<BrandsBriefResponse> {
+    const response = await fetch(`${API_BASE_URL}/brands/brief`);
+    if (!response.ok) throw new Error('Failed to fetch brands brief');
     return response.json();
   },
 

@@ -3,32 +3,102 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { categories } from '@/data/products';
 import { Separator } from '@/components/ui/separator';
-import { useAllBrands } from '@/hooks/useBrands';
-import { Loader2 } from 'lucide-react';
+import { useBrandsBrief } from '@/hooks/useBrandsBrief';
+import { ApiCategory } from '@/services/api';
+import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface FilterSidebarProps {
-  selectedBrands: string[];
-  selectedCategories: string[];
+  selectedBrandIds: number[];
+  selectedCategoryId: number | null;
   priceRange: [number, number];
-  onBrandChange: (brand: string) => void;
-  onCategoryChange: (category: string) => void;
+  onBrandChange: (brandId: number) => void;
+  onCategoryChange: (categoryId: number | null) => void;
   onPriceChange: (range: [number, number]) => void;
   onReset: () => void;
+  categories: ApiCategory[];
 }
 
+// Recursive category tree component
+const CategoryTree = ({ 
+  categories, 
+  selectedCategoryId, 
+  onSelect, 
+  level = 0 
+}: { 
+  categories: ApiCategory[]; 
+  selectedCategoryId: number | null;
+  onSelect: (id: number | null) => void;
+  level?: number;
+}) => {
+  const [openCategories, setOpenCategories] = useState<number[]>([]);
+
+  const toggleCategory = (id: number) => {
+    setOpenCategories(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <div className={level > 0 ? 'ml-4 mt-1' : ''}>
+      {categories.map((category) => {
+        const hasChildren = category.children && category.children.length > 0;
+        const isOpen = openCategories.includes(category.id);
+        const isSelected = selectedCategoryId === category.id;
+
+        return (
+          <div key={category.id} className="py-1">
+            <div className="flex items-center gap-2">
+              {hasChildren && (
+                <button
+                  onClick={() => toggleCategory(category.id)}
+                  className="p-0.5 hover:bg-secondary rounded"
+                >
+                  {isOpen ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
+                </button>
+              )}
+              {!hasChildren && <span className="w-4" />}
+              <button
+                onClick={() => onSelect(category.id)}
+                className={`text-sm text-left hover:text-primary transition-colors ${
+                  isSelected ? 'text-primary font-medium' : ''
+                }`}
+              >
+                {category.name}
+              </button>
+            </div>
+            {hasChildren && isOpen && (
+              <CategoryTree 
+                categories={category.children!} 
+                selectedCategoryId={selectedCategoryId}
+                onSelect={onSelect}
+                level={level + 1}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const FilterSidebar = ({
-  selectedBrands,
-  selectedCategories,
+  selectedBrandIds,
+  selectedCategoryId,
   priceRange,
   onBrandChange,
   onCategoryChange,
   onPriceChange,
   onReset,
+  categories,
 }: FilterSidebarProps) => {
   const [localPriceRange, setLocalPriceRange] = useState(priceRange);
-  const { data: brands = [], isLoading: brandsLoading } = useAllBrands();
+  const { data: brands = [], isLoading: brandsLoading } = useBrandsBrief();
 
   const handlePriceChange = (value: number[]) => {
     setLocalPriceRange([value[0], value[1]]);
@@ -49,22 +119,20 @@ export const FilterSidebar = ({
       {/* Categories */}
       <div>
         <h4 className="font-roboto font-medium mb-3">Категории</h4>
-        <div className="space-y-2">
-          {categories.map((category) => (
-            <div key={category.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={`category-${category.id}`}
-                checked={selectedCategories.includes(category.id)}
-                onCheckedChange={() => onCategoryChange(category.id)}
-              />
-              <Label
-                htmlFor={`category-${category.id}`}
-                className="text-sm font-roboto cursor-pointer"
-              >
-                {category.icon} {category.name}
-              </Label>
-            </div>
-          ))}
+        <div className="max-h-72 overflow-y-auto">
+          <button
+            onClick={() => onCategoryChange(null)}
+            className={`text-sm mb-2 hover:text-primary transition-colors ${
+              selectedCategoryId === null ? 'text-primary font-medium' : ''
+            }`}
+          >
+            Все категории
+          </button>
+          <CategoryTree 
+            categories={categories} 
+            selectedCategoryId={selectedCategoryId}
+            onSelect={onCategoryChange}
+          />
         </div>
       </div>
 
@@ -83,10 +151,20 @@ export const FilterSidebar = ({
               <div key={brand.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`brand-${brand.id}`}
-                  checked={selectedBrands.includes(brand.name)}
-                  onCheckedChange={() => onBrandChange(brand.name)}
+                  checked={selectedBrandIds.includes(brand.id)}
+                  onCheckedChange={() => onBrandChange(brand.id)}
                 />
-                <Label htmlFor={`brand-${brand.id}`} className="text-sm font-roboto cursor-pointer">
+                <Label htmlFor={`brand-${brand.id}`} className="text-sm font-roboto cursor-pointer flex items-center gap-2">
+                  {brand.logo && (
+                    <img 
+                      src={brand.logo} 
+                      alt={brand.name} 
+                      className="w-5 h-5 rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
                   {brand.name}
                 </Label>
               </div>
