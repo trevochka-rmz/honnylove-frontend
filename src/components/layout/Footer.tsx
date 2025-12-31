@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail, Phone } from 'lucide-react';
+import { useAllCategories } from '@/hooks/useCategories';
 
 export const Footer = () => {
+  const { data: categories = [] } = useAllCategories();
+  
+  // Get only level 1 categories (top level)
+  const topLevelCategories = categories.slice(0, 6);
+
   return (
     <footer className="bg-muted border-t border-border mt-20">
       <div className="container mx-auto px-4 py-12">
@@ -22,30 +28,20 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Categories from API */}
           <div>
             <h4 className="font-roboto font-semibold mb-4">Категории</h4>
             <ul className="space-y-2 text-sm font-roboto">
-              <li>
-                <Link to="/catalog?category=face" className="text-muted-foreground hover:text-primary transition-colors">
-                  Уход за лицом
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog?category=body" className="text-muted-foreground hover:text-primary transition-colors">
-                  Уход за телом
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog?category=makeup" className="text-muted-foreground hover:text-primary transition-colors">
-                  Декоративная косметика
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog?category=pajamas" className="text-muted-foreground hover:text-primary transition-colors">
-                  Пижамы и халаты
-                </Link>
-              </li>
+              {topLevelCategories.map((category) => (
+                <li key={category.id}>
+                  <Link 
+                    to={`/catalog?categoryId=${category.id}`} 
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 

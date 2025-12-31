@@ -5,12 +5,14 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
 import { useProducts, ProductsResult } from '@/hooks/useProducts';
 import { useAllCategories, useCategory } from '@/hooks/useCategories';
+import { useBrandsBrief } from '@/hooks/useBrandsBrief';
 import { ProductsParams, ApiCategory } from '@/services/api';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { SlidersHorizontal, Loader2, ChevronRight } from 'lucide-react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { SlidersHorizontal, Loader2, ChevronRight, X } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   Pagination,
   PaginationContent,
@@ -27,9 +29,9 @@ const ITEMS_PER_PAGE = 9;
 const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="group flex flex-col items-center p-4 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300"
+    className="group flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300"
   >
-    <div className="w-16 h-16 rounded-full overflow-hidden mb-3 bg-secondary">
+    <div className="w-14 h-14 rounded-full overflow-hidden mb-2 bg-secondary">
       <img
         src={category.image_url}
         alt={category.name}
@@ -39,7 +41,7 @@ const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick
         }}
       />
     </div>
-    <span className="text-sm font-medium text-center group-hover:text-primary transition-colors">
+    <span className="text-xs font-medium text-center group-hover:text-primary transition-colors line-clamp-2">
       {category.name}
     </span>
   </button>
@@ -47,6 +49,7 @@ const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick
 
 const Catalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const categoryIdParam = searchParams.get('categoryId');
   const brandIdParam = searchParams.get('brandId');
   const newParam = searchParams.get('new');
@@ -68,6 +71,9 @@ const Catalog = () => {
   
   // Fetch current category details for subcategories
   const { data: currentCategoryData } = useCategory(selectedCategoryId);
+
+  // Fetch brands for filter display
+  const { data: brandsBrief = [] } = useBrandsBrief();
 
   // Update from URL params
   useEffect(() => {
@@ -166,20 +172,32 @@ const Catalog = () => {
     setCurrentPage(1);
   };
 
+  const handleRemoveBrandFilter = (brandId: number) => {
+    setSelectedBrandIds((prev) => prev.filter((b) => b !== brandId));
+    setCurrentPage(1);
+  };
+
+  const handleRemoveCategoryFilter = () => {
+    setSelectedCategoryId(null);
+    searchParams.delete('categoryId');
+    setSearchParams(searchParams);
+    setCurrentPage(1);
+  };
+
   // Get breadcrumb path for current category
-  const getBreadcrumbPath = (): ApiCategory[] => {
+  const getBreadcrumbPath = (): { name: string; categoryId: number }[] => {
     if (!selectedCategoryId || allCategories.length === 0) return [];
     
-    const path: ApiCategory[] = [];
+    const path: { name: string; categoryId: number }[] = [];
     
-    const findCategory = (categories: ApiCategory[], targetId: number, currentPath: ApiCategory[]): boolean => {
+    const findCategory = (categories: ApiCategory[], targetId: number, currentPath: { name: string; categoryId: number }[]): boolean => {
       for (const cat of categories) {
         if (cat.id === targetId) {
-          path.push(...currentPath, cat);
+          path.push(...currentPath, { name: cat.name, categoryId: cat.id });
           return true;
         }
         if (cat.children && cat.children.length > 0) {
-          if (findCategory(cat.children, targetId, [...currentPath, cat])) {
+          if (findCategory(cat.children, targetId, [...currentPath, { name: cat.name, categoryId: cat.id }])) {
             return true;
           }
         }
@@ -193,6 +211,17 @@ const Catalog = () => {
 
   const breadcrumbPath = getBreadcrumbPath();
   const subcategories = currentCategoryData?.children || [];
+
+  // Get selected brand names for filter display
+  const getSelectedBrandNames = () => {
+    return selectedBrandIds.map(id => {
+      const brand = brandsBrief.find(b => b.id === id);
+      return brand ? { id, name: brand.name } : null;
+    }).filter(Boolean) as { id: number; name: string }[];
+  };
+
+  const selectedBrands = getSelectedBrandNames();
+  const hasActiveFilters = selectedBrandIds.length > 0 || priceRange[0] > 0 || priceRange[1] < 10000;
 
   // Generate pagination numbers
   const getPaginationNumbers = () => {
@@ -214,6 +243,13 @@ const Catalog = () => {
     }
     
     return pages;
+  };
+
+  // Handle product click to pass category path
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`, { 
+      state: { categoryPath: breadcrumbPath }
+    });
   };
 
   if (isLoading) {
@@ -256,10 +292,10 @@ const Catalog = () => {
               Каталог
             </button>
             {breadcrumbPath.map((cat, index) => (
-              <div key={cat.id} className="flex items-center gap-2">
+              <div key={cat.categoryId} className="flex items-center gap-2">
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 <button
-                  onClick={() => handleCategorySelect(cat.id)}
+                  onClick={() => handleCategorySelect(cat.categoryId)}
                   className={`transition-colors ${
                     index === breadcrumbPath.length - 1 
                       ? 'text-foreground font-medium' 
@@ -273,30 +309,35 @@ const Catalog = () => {
           </nav>
         )}
 
+        {/* Title Row with Subcategories */}
         <div className="mb-6">
-          <h1 className="text-3xl font-playfair font-bold mb-2">
-            {currentCategoryData?.name || 'Каталог'}
-          </h1>
-          <p className="text-muted-foreground font-roboto">
-            Найдено товаров: {result.total}
-          </p>
-        </div>
-
-        {/* Subcategories */}
-        {subcategories.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-4">Подкатегории</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-              {subcategories.map((subcat) => (
-                <SubcategoryCard
-                  key={subcat.id}
-                  category={subcat}
-                  onClick={() => handleCategorySelect(subcat.id)}
-                />
-              ))}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8">
+            {/* Title and count */}
+            <div className="flex-shrink-0 mb-4 lg:mb-0">
+              <h1 className="text-3xl font-playfair font-bold">
+                {currentCategoryData?.name || 'Каталог'}
+              </h1>
+              <p className="text-muted-foreground font-roboto">
+                Найдено товаров: {result.total}
+              </p>
             </div>
+
+            {/* Subcategories inline on desktop */}
+            {subcategories.length > 0 && (
+              <div className="flex-1 overflow-x-auto pb-2">
+                <div className="flex gap-3 lg:flex-wrap">
+                  {subcategories.map((subcat) => (
+                    <SubcategoryCard
+                      key={subcat.id}
+                      category={subcat}
+                      onClick={() => handleCategorySelect(subcat.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Filters */}
@@ -305,7 +346,7 @@ const Catalog = () => {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6 gap-4">
+            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
               {/* Mobile Filter */}
               <Sheet>
                 <SheetTrigger asChild className="lg:hidden">
@@ -318,6 +359,46 @@ const Catalog = () => {
                   {filterSidebar}
                 </SheetContent>
               </Sheet>
+
+              {/* Active Filters */}
+              {hasActiveFilters && (
+                <div className="flex items-center gap-2 flex-wrap flex-1">
+                  {selectedBrands.map((brand) => (
+                    <Badge
+                      key={brand.id}
+                      variant="secondary"
+                      className="flex items-center gap-1 pr-1"
+                    >
+                      {brand.name}
+                      <button
+                        onClick={() => handleRemoveBrandFilter(brand.id)}
+                        className="ml-1 hover:bg-muted rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {(priceRange[0] > 0 || priceRange[1] < 10000) && (
+                    <Badge variant="secondary" className="flex items-center gap-1 pr-1">
+                      {priceRange[0]} - {priceRange[1]} ₽
+                      <button
+                        onClick={() => setPriceRange([0, 10000])}
+                        className="ml-1 hover:bg-muted rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReset}
+                    className="text-muted-foreground"
+                  >
+                    Сбросить все
+                  </Button>
+                </div>
+              )}
 
               {/* Sort */}
               <div className="flex items-center gap-2 ml-auto">
@@ -345,7 +426,9 @@ const Catalog = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {result.products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <div key={product.id} onClick={() => handleProductClick(product.id)}>
+                      <ProductCard product={product} />
+                    </div>
                   ))}
                 </div>
 

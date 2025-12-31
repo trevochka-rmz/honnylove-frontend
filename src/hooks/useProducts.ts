@@ -21,6 +21,20 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => ({
   inStock: apiProduct.inStock,
   isNew: apiProduct.isNew,
   isBestseller: apiProduct.isBestseller,
+  // Category path info
+  top_category_name: apiProduct.top_category_name,
+  top_category_id: apiProduct.top_category_id,
+  top_category_slug: apiProduct.top_category_slug,
+  parent_category_name: apiProduct.parent_category_name,
+  parent_category_id: apiProduct.parent_category_id,
+  parent_category_slug: apiProduct.parent_category_slug,
+  category_name: apiProduct.category_name,
+  category_id: apiProduct.category_id,
+  category_slug: apiProduct.category_slug,
+  category_level: apiProduct.category_level,
+  brand_slug: apiProduct.brand_slug,
+  skin_type: apiProduct.skin_type,
+  slug: apiProduct.slug,
 });
 
 export interface ProductsResult {
