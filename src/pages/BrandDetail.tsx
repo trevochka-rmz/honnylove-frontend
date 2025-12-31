@@ -10,9 +10,15 @@ import { ArrowLeft, ArrowRight, MapPin, Calendar, Sparkles, Loader2 } from "luci
 const BrandDetail = () => {
   const { brandId } = useParams<{ brandId: string }>();
   const { data: brand, isLoading: brandLoading } = useBrand(brandId || "");
-  const { data: productsData } = useProducts({ limit: 50 });
+  
+  // Fetch products for this brand from API
+  const brandIdNum = brandId ? parseInt(brandId) : undefined;
+  const { data: productsData, isLoading: productsLoading } = useProducts({ 
+    brandId: brandIdNum, 
+    limit: 4 
+  });
 
-  const products = productsData?.products || [];
+  const brandProducts = productsData?.products || [];
 
   if (brandLoading) {
     return (
@@ -45,11 +51,6 @@ const BrandDetail = () => {
     );
   }
 
-  // Get products for this brand
-  const brandProducts = products.filter(
-    p => p.brand === brand.name
-  ).slice(0, 4);
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -67,8 +68,20 @@ const BrandDetail = () => {
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-primary/10 via-secondary/5 to-background rounded-3xl p-8 md:p-12 mb-12">
           <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="w-32 h-32 md:w-40 md:h-40 bg-background rounded-full flex items-center justify-center text-6xl md:text-7xl shadow-lg">
-              {brand.logo === '/placeholder.svg' ? '🧴' : brand.logo}
+            {/* Brand Logo */}
+            <div className="w-32 h-32 md:w-40 md:h-40 bg-background rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+              {brand.logo && brand.logo !== '/placeholder.svg' ? (
+                <img 
+                  src={brand.logo} 
+                  alt={brand.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
+                />
+              ) : (
+                <span className="text-6xl">🧴</span>
+              )}
             </div>
             <div className="text-center md:text-left flex-1">
               <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">
@@ -78,54 +91,66 @@ const BrandDetail = () => {
                 {brand.fullDescription || brand.description}
               </p>
               <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{brand.country}</span>
-                </div>
-                <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">С {brand.founded} года</span>
-                </div>
-                <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{brand.philosophy}</span>
-                </div>
+                {brand.country && (
+                  <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{brand.country}</span>
+                  </div>
+                )}
+                {brand.founded && (
+                  <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">С {brand.founded} года</span>
+                  </div>
+                )}
+                {brand.philosophy && (
+                  <div className="flex items-center gap-2 bg-background/80 px-4 py-2 rounded-full">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{brand.philosophy}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
         {/* Highlights */}
-        <section className="mb-12">
-          <h2 className="font-playfair text-2xl font-bold mb-6">Преимущества бренда</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {brand.highlights.map((highlight, index) => (
-              <div
-                key={index}
-                className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors"
-              >
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-primary font-bold">{index + 1}</span>
+        {brand.highlights && brand.highlights.length > 0 && (
+          <section className="mb-12">
+            <h2 className="font-playfair text-2xl font-bold mb-6">Преимущества бренда</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {brand.highlights.map((highlight, index) => (
+                <div
+                  key={index}
+                  className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors"
+                >
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                    <span className="text-primary font-bold">{index + 1}</span>
+                  </div>
+                  <p className="text-foreground font-medium">{highlight}</p>
                 </div>
-                <p className="text-foreground font-medium">{highlight}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Products Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-playfair text-2xl font-bold">Товары бренда</h2>
             <Button asChild variant="outline">
-              <Link to={`/catalog?brand=${brand.name}`}>
+              <Link to={`/catalog?brandId=${brandId}`}>
                 Смотреть все
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
           
-          {brandProducts.length > 0 ? (
+          {productsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : brandProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {brandProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -152,7 +177,7 @@ const BrandDetail = () => {
             Перейдите в каталог, чтобы увидеть полный ассортимент продукции этого бренда
           </p>
           <Button asChild size="lg">
-            <Link to={`/catalog?brand=${brand.name}`}>
+            <Link to={`/catalog?brandId=${brandId}`}>
               Перейти в каталог
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

@@ -17,6 +17,20 @@ export interface Product {
   inStock: boolean;
   isNew?: boolean;
   isBestseller?: boolean;
+  // Category path info
+  top_category_name?: string;
+  top_category_id?: number;
+  top_category_slug?: string;
+  parent_category_name?: string;
+  parent_category_id?: number;
+  parent_category_slug?: string;
+  category_name?: string;
+  category_id?: number;
+  category_slug?: string;
+  category_level?: number;
+  brand_slug?: string;
+  skin_type?: string;
+  slug?: string;
 }
 
 export const products: Product[] = [

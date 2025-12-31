@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -10,13 +10,14 @@ import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartApiStore } from '@/store/cartApiStore';
-import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: product, isLoading } = useProduct(id || '');
   const { data: allProductsData } = useProducts({ limit: 50 });
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -30,6 +31,9 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+
+  // Get referrer category path from location state
+  const referrerPath = location.state?.categoryPath || null;
 
   // Get all images
   const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean) : [];
@@ -82,6 +86,31 @@ const ProductDetail = () => {
   const discount = product.discountPrice
     ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
     : 0;
+
+  // Build category breadcrumb from product data
+  const buildBreadcrumb = () => {
+    const crumbs: { name: string; categoryId: number | null }[] = [];
+    
+    if (referrerPath && referrerPath.length > 0) {
+      // Use referrer path if available
+      return referrerPath;
+    }
+    
+    // Build from product category data
+    if (product.top_category_name && product.top_category_id) {
+      crumbs.push({ name: product.top_category_name, categoryId: product.top_category_id });
+    }
+    if (product.parent_category_name && product.parent_category_id && product.category_level && product.category_level >= 2) {
+      crumbs.push({ name: product.parent_category_name, categoryId: product.parent_category_id });
+    }
+    if (product.category_name && product.category_id && product.category_level && product.category_level >= 3) {
+      crumbs.push({ name: product.category_name, categoryId: product.category_id });
+    }
+    
+    return crumbs;
+  };
+
+  const breadcrumbPath = buildBreadcrumb();
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -140,29 +169,50 @@ const ProductDetail = () => {
     setSelectedImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
   };
 
+  const handleBackToCatalog = () => {
+    // Navigate back with preserved filters
+    if (referrerPath && referrerPath.length > 0) {
+      const lastCat = referrerPath[referrerPath.length - 1];
+      navigate(`/catalog?categoryId=${lastCat.categoryId}`);
+    } else if (product.category_id) {
+      navigate(`/catalog?categoryId=${product.category_id}`);
+    } else {
+      navigate('/catalog');
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm font-roboto text-muted-foreground mb-6">
+        <nav className="flex items-center gap-2 text-sm font-roboto text-muted-foreground mb-6 flex-wrap">
           <Link to="/" className="hover:text-primary">
             Главная
           </Link>
-          <span>/</span>
+          <ChevronRight className="h-4 w-4" />
           <Link to="/catalog" className="hover:text-primary">
             Каталог
           </Link>
-          <span>/</span>
+          {breadcrumbPath.map((crumb, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4" />
+              <Link 
+                to={`/catalog?categoryId=${crumb.categoryId}`}
+                className="hover:text-primary"
+              >
+                {crumb.name}
+              </Link>
+            </div>
+          ))}
+          <ChevronRight className="h-4 w-4" />
           <span className="text-foreground">{product.name}</span>
         </nav>
 
-        <Button variant="ghost" size="sm" asChild className="mb-6">
-          <Link to="/catalog">
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Назад к каталогу
-          </Link>
+        <Button variant="ghost" size="sm" onClick={handleBackToCatalog} className="mb-6">
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Назад к каталогу
         </Button>
 
         {/* Product Details */}
@@ -336,25 +386,30 @@ const ProductDetail = () => {
             {/* Description label */}
             <div className="border-t border-border pt-6">
               <h3 className="font-playfair font-semibold text-lg mb-3">Описание</h3>
-              <p className="text-sm font-roboto text-foreground/80 leading-relaxed">
+              <p className="text-sm font-roboto text-foreground/80 leading-relaxed mb-4">
                 {product.description}
               </p>
+              {/* Skin Type */}
+              {product.skin_type && (
+                <p className="text-sm font-roboto text-foreground/80">
+                  <span className="font-medium">Тип кожи:</span> {product.skin_type}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="description" className="mb-12">
+        <Tabs defaultValue="usage" className="mb-12">
           <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="description">Описание</TabsTrigger>
+            <TabsTrigger value="usage">Применение</TabsTrigger>
             <TabsTrigger value="ingredients">Состав</TabsTrigger>
             <TabsTrigger value="reviews">Отзывы</TabsTrigger>
           </TabsList>
-          <TabsContent value="description" className="mt-6">
+          <TabsContent value="usage" className="mt-6">
             <div className="prose max-w-none">
-              <p className="font-roboto text-foreground/80">{product.description}</p>
               {product.usage && (
-                <div className="mt-4">
+                <div>
                   <h3 className="font-roboto font-semibold mb-2">Способ применения:</h3>
                   <p className="font-roboto text-foreground/80">{product.usage}</p>
                 </div>
