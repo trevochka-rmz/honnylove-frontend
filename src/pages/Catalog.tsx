@@ -25,13 +25,13 @@ import {
 
 const ITEMS_PER_PAGE = 9;
 
-// Subcategory card component
+// Subcategory card component with fixed dimensions
 const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="group flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300"
+    className="group flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300 w-[100px] h-[100px] flex-shrink-0"
   >
-    <div className="w-14 h-14 rounded-full overflow-hidden mb-2 bg-secondary">
+    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 bg-secondary flex-shrink-0">
       <img
         src={category.image_url}
         alt={category.name}
@@ -41,7 +41,7 @@ const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick
         }}
       />
     </div>
-    <span className="text-xs font-medium text-center group-hover:text-primary transition-colors line-clamp-2">
+    <span className="text-xs font-medium text-center group-hover:text-primary transition-colors line-clamp-2 leading-tight">
       {category.name}
     </span>
   </button>
@@ -309,23 +309,26 @@ const Catalog = () => {
           </nav>
         )}
 
-        {/* Title Row with Subcategories */}
+        {/* Title Row */}
         <div className="mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:gap-8">
-            {/* Title and count */}
-            <div className="flex-shrink-0 mb-4 lg:mb-0">
-              <h1 className="text-3xl font-playfair font-bold">
-                {currentCategoryData?.name || 'Каталог'}
-              </h1>
-              <p className="text-muted-foreground font-roboto">
-                Найдено товаров: {result.total}
-              </p>
-            </div>
+          <h1 className="text-3xl font-playfair font-bold">
+            {currentCategoryData?.name || 'Каталог'}
+          </h1>
+          <p className="text-muted-foreground font-roboto">
+            Найдено товаров: {result.total}
+          </p>
+        </div>
 
-            {/* Subcategories inline on desktop */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Desktop Filters */}
+          <div className="hidden lg:block">{filterSidebar}</div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Subcategories - aligned with products */}
             {subcategories.length > 0 && (
-              <div className="flex-1 overflow-x-auto pb-2">
-                <div className="flex gap-3 lg:flex-wrap">
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
                   {subcategories.map((subcat) => (
                     <SubcategoryCard
                       key={subcat.id}
@@ -336,15 +339,7 @@ const Catalog = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Filters */}
-          <div className="hidden lg:block">{filterSidebar}</div>
-
-          {/* Main Content */}
-          <div className="flex-1">
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
               {/* Mobile Filter */}

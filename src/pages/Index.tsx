@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/Footer';
 import { HeroSlider } from '@/components/home/HeroSlider';
 import { ProductCard } from '@/components/product/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
+import { useAllCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Sparkles, TrendingUp, Star, Loader2 } from 'lucide-react';
@@ -11,10 +12,14 @@ const Index = () => {
   const { data: newProductsData, isLoading: isLoadingNew } = useProducts({ isNew: true, limit: 4 });
   const { data: saleProductsData, isLoading: isLoadingSale } = useProducts({ isOnSale: true, limit: 4 });
   const { data: bestsellersData, isLoading: isLoadingBestsellers } = useProducts({ isBestseller: true, limit: 4 });
+  const { data: categories = [] } = useAllCategories();
 
   const newProducts = newProductsData?.products || [];
   const saleProducts = saleProductsData?.products || [];
   const bestsellers = bestsellersData?.products || [];
+
+  // Get first 6 top-level categories for popular categories section
+  const topCategories = categories.slice(0, 6);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,24 +111,35 @@ const Index = () => {
             Популярные категории
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[
-              { name: 'Уход за лицом', link: '/catalog?categoryId=1', emoji: '✨' },
-              { name: 'Макияж', link: '/catalog?categoryId=23', emoji: '💄' },
-              { name: 'Уход за телом', link: '/catalog?categoryId=34', emoji: '💆' },
-              { name: 'Пищевые добавки', link: '/catalog?categoryId=38', emoji: '💊' },
-              { name: 'Одежда', link: '/catalog?categoryId=42', emoji: '🌙' },
-              { name: 'Все товары', link: '/catalog', emoji: '🛍️' },
-            ].map((cat) => (
+            {topCategories.map((cat) => (
               <Link
-                key={cat.name}
-                to={cat.link}
-                className="group relative aspect-square rounded-xl bg-gradient-card overflow-hidden hover:shadow-soft transition-all duration-300"
+                key={cat.id}
+                to={`/catalog?categoryId=${cat.id}`}
+                className="group relative aspect-square rounded-xl overflow-hidden hover:shadow-soft transition-all duration-300"
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-4xl mb-2">{cat.emoji}</span>
-                  <h3 className="font-roboto font-medium text-sm md:text-base group-hover:text-primary transition-colors">
+                {/* Category Image */}
+                <img
+                  src={cat.image_url}
+                  alt={cat.name}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                {/* Fallback gradient */}
+                <div className="absolute inset-0 bg-gradient-card" />
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+                {/* Content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end p-4 text-center">
+                  <h3 className="font-roboto font-semibold text-base md:text-lg group-hover:text-primary transition-colors">
                     {cat.name}
                   </h3>
+                  {cat.product_count && parseInt(cat.product_count) > 0 && (
+                    <span className="text-sm text-muted-foreground mt-1">
+                      {cat.product_count} товаров
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}
