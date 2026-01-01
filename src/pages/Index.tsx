@@ -115,7 +115,7 @@ const Index = () => {
               <Link
                 key={cat.id}
                 to={`/catalog?categoryId=${cat.id}`}
-                className="group relative aspect-square rounded-xl overflow-hidden hover:shadow-soft transition-all duration-300"
+                className="group relative aspect-square rounded-xl overflow-hidden hover:shadow-soft transition-all duration-300 bg-secondary"
               >
                 {/* Category Image */}
                 <img
@@ -123,13 +123,12 @@ const Index = () => {
                   alt={cat.name}
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
                   }}
                 />
-                {/* Fallback gradient */}
-                <div className="absolute inset-0 bg-gradient-card" />
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
                 {/* Content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-end p-4 text-center">
                   <h3 className="font-roboto font-semibold text-base md:text-lg group-hover:text-primary transition-colors">

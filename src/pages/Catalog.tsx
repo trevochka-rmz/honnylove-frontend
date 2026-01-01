@@ -29,9 +29,9 @@ const ITEMS_PER_PAGE = 9;
 const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="group flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300 w-[100px] h-[100px] flex-shrink-0"
+    className="group flex flex-col items-center p-3 rounded-xl bg-card border border-border hover:border-primary hover:shadow-md transition-all duration-300 w-[140px] h-[120px] flex-shrink-0"
   >
-    <div className="w-12 h-12 rounded-full overflow-hidden mb-2 bg-secondary flex-shrink-0">
+    <div className="w-14 h-14 rounded-full overflow-hidden mb-2 bg-secondary flex-shrink-0">
       <img
         src={category.image_url}
         alt={category.name}
@@ -41,7 +41,7 @@ const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick
         }}
       />
     </div>
-    <span className="text-xs font-medium text-center group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+    <span className="text-xs font-medium text-center group-hover:text-primary transition-colors line-clamp-3 leading-tight px-1">
       {category.name}
     </span>
   </button>
@@ -309,22 +309,21 @@ const Catalog = () => {
           </nav>
         )}
 
-        {/* Title Row */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-playfair font-bold">
-            {currentCategoryData?.name || 'Каталог'}
-          </h1>
-          <p className="text-muted-foreground font-roboto">
-            Найдено товаров: {result.total}
-          </p>
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Filters */}
           <div className="hidden lg:block">{filterSidebar}</div>
 
           {/* Main Content */}
           <div className="flex-1">
+            {/* Title Row */}
+            <div className="mb-4">
+              <h1 className="text-3xl font-playfair font-bold">
+                {currentCategoryData?.name || 'Каталог'}
+              </h1>
+              <p className="text-muted-foreground font-roboto">
+                Найдено товаров: {result.total}
+              </p>
+            </div>
             {/* Subcategories - aligned with products */}
             {subcategories.length > 0 && (
               <div className="mb-6">

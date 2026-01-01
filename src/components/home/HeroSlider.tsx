@@ -142,8 +142,8 @@ export const HeroSlider = () => {
 
             {/* Content */}
             <div className="relative h-full flex items-center">
-              <div className="container mx-auto px-4">
-                <div className="max-w-2xl">
+              <div className="container mx-auto px-4 pl-16 md:pl-20">
+                <div className="max-w-2xl ml-8 md:ml-12">
                   <p className="text-sm font-roboto text-primary mb-2">{slide.preheader}</p>
                   <h2 className="text-4xl md:text-6xl font-playfair font-bold mb-4">
                     {slide.title}
