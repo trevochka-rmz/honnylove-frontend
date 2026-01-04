@@ -1,21 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useBrandsBrief } from '@/hooks/useBrandsBrief';
 import { ApiCategory } from '@/services/api';
 import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface FilterSidebarProps {
   selectedBrandIds: number[];
   selectedCategoryId: number | null;
   priceRange: [number, number];
+  onlyOnSale: boolean;
   onBrandChange: (brandId: number) => void;
   onCategoryChange: (categoryId: number | null) => void;
   onPriceChange: (range: [number, number]) => void;
+  onSaleChange: (onSale: boolean) => void;
   onReset: () => void;
   categories: ApiCategory[];
 }
@@ -91,31 +93,46 @@ export const FilterSidebar = ({
   selectedBrandIds,
   selectedCategoryId,
   priceRange,
+  onlyOnSale,
   onBrandChange,
   onCategoryChange,
   onPriceChange,
+  onSaleChange,
   onReset,
   categories,
 }: FilterSidebarProps) => {
-  const [localPriceRange, setLocalPriceRange] = useState(priceRange);
+  const [minPrice, setMinPrice] = useState(priceRange[0].toString());
+  const [maxPrice, setMaxPrice] = useState(priceRange[1].toString());
   const { data: brands = [], isLoading: brandsLoading } = useBrandsBrief();
 
-  const handlePriceChange = (value: number[]) => {
-    setLocalPriceRange([value[0], value[1]]);
-    onPriceChange([value[0], value[1]]);
+  // Sync local state with props
+  useEffect(() => {
+    setMinPrice(priceRange[0].toString());
+    setMaxPrice(priceRange[1].toString());
+  }, [priceRange]);
+
+  const handleMinPriceBlur = () => {
+    const min = parseInt(minPrice) || 0;
+    const max = parseInt(maxPrice) || 10000;
+    onPriceChange([Math.min(min, max), Math.max(min, max)]);
+  };
+
+  const handleMaxPriceBlur = () => {
+    const min = parseInt(minPrice) || 0;
+    const max = parseInt(maxPrice) || 10000;
+    onPriceChange([Math.min(min, max), Math.max(min, max)]);
+  };
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      const min = parseInt(minPrice) || 0;
+      const max = parseInt(maxPrice) || 10000;
+      onPriceChange([Math.min(min, max), Math.max(min, max)]);
+    }
   };
 
   return (
-    <aside className="w-full lg:w-64 space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-playfair font-semibold text-lg">Фильтры</h3>
-        <Button variant="ghost" size="sm" onClick={onReset} className="font-roboto">
-          Сбросить
-        </Button>
-      </div>
-
-      <Separator />
-
+    <aside className="w-full lg:w-64 space-y-4">
       {/* Categories */}
       <div>
         <h4 className="font-roboto font-medium mb-3">Категории</h4>
@@ -178,21 +195,54 @@ export const FilterSidebar = ({
       {/* Price Range */}
       <div>
         <h4 className="font-roboto font-medium mb-3">Цена</h4>
-        <div className="space-y-4">
-          <Slider
-            min={0}
-            max={10000}
-            step={100}
-            value={localPriceRange}
-            onValueChange={handlePriceChange}
-            className="w-full"
-          />
-          <div className="flex items-center justify-between text-sm font-roboto text-muted-foreground">
-            <span>{localPriceRange[0]} ₽</span>
-            <span>{localPriceRange[1]} ₽</span>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Input
+              type="number"
+              placeholder="От"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              onBlur={handleMinPriceBlur}
+              onKeyDown={handlePriceKeyDown}
+              className="text-sm"
+            />
           </div>
+          <span className="text-muted-foreground">—</span>
+          <div className="flex-1">
+            <Input
+              type="number"
+              placeholder="До"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              onBlur={handleMaxPriceBlur}
+              onKeyDown={handlePriceKeyDown}
+              className="text-sm"
+            />
+          </div>
+          <span className="text-muted-foreground text-sm">₽</span>
         </div>
       </div>
+
+      <Separator />
+
+      {/* Sale Filter */}
+      <div className="flex items-center justify-between">
+        <Label htmlFor="sale-toggle" className="font-roboto font-medium cursor-pointer">
+          Только со скидкой
+        </Label>
+        <Switch
+          id="sale-toggle"
+          checked={onlyOnSale}
+          onCheckedChange={onSaleChange}
+        />
+      </div>
+
+      <Separator />
+
+      {/* Reset Button */}
+      <Button variant="outline" size="sm" onClick={onReset} className="w-full font-roboto">
+        Сбросить фильтры
+      </Button>
     </aside>
   );
 };
