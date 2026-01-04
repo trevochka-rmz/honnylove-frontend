@@ -65,6 +65,7 @@ const Catalog = () => {
   );
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<string>('id_desc');
+  const [onlyOnSale, setOnlyOnSale] = useState<boolean>(false);
 
   // Fetch all categories for navigation
   const { data: allCategories = [] } = useAllCategories();
@@ -93,7 +94,7 @@ const Catalog = () => {
       case 'price-asc': return 'price_asc';
       case 'price-desc': return 'price_desc';
       case 'rating': return 'rating';
-      case 'new': return 'new_random';
+      case 'new': return 'newest';
       case 'popular': return 'popularity';
       default: return 'id_desc';
     }
@@ -123,6 +124,9 @@ const Catalog = () => {
   }
   if (priceRange[1] < 10000) {
     apiParams.maxPrice = priceRange[1];
+  }
+  if (onlyOnSale) {
+    apiParams.isOnSale = true;
   }
 
   const { data, isLoading } = useProducts(apiParams);
@@ -158,6 +162,7 @@ const Catalog = () => {
     setSelectedBrandIds([]);
     setSelectedCategoryId(null);
     setPriceRange([0, 10000]);
+    setOnlyOnSale(false);
     setCurrentPage(1);
     setSearchParams({});
   };
@@ -221,7 +226,7 @@ const Catalog = () => {
   };
 
   const selectedBrands = getSelectedBrandNames();
-  const hasActiveFilters = selectedBrandIds.length > 0 || priceRange[0] > 0 || priceRange[1] < 10000;
+  const hasActiveFilters = selectedBrandIds.length > 0 || priceRange[0] > 0 || priceRange[1] < 10000 || onlyOnSale;
 
   // Generate pagination numbers
   const getPaginationNumbers = () => {
@@ -269,9 +274,11 @@ const Catalog = () => {
       selectedBrandIds={selectedBrandIds}
       selectedCategoryId={selectedCategoryId}
       priceRange={priceRange}
+      onlyOnSale={onlyOnSale}
       onBrandChange={handleBrandChange}
       onCategoryChange={handleCategorySelect}
       onPriceChange={setPriceRange}
+      onSaleChange={setOnlyOnSale}
       onReset={handleReset}
       categories={allCategories}
     />
@@ -377,6 +384,17 @@ const Catalog = () => {
                       {priceRange[0]} - {priceRange[1]} ₽
                       <button
                         onClick={() => setPriceRange([0, 10000])}
+                        className="ml-1 hover:bg-muted rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {onlyOnSale && (
+                    <Badge variant="secondary" className="flex items-center gap-1 pr-1">
+                      Со скидкой
+                      <button
+                        onClick={() => setOnlyOnSale(false)}
                         className="ml-1 hover:bg-muted rounded-full p-0.5"
                       >
                         <X className="h-3 w-3" />

@@ -15,7 +15,7 @@ import {
   PaginationEllipsis,
 } from "@/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 12;
 
 const Sales = () => {
   const [sortBy, setSortBy] = useState("discount");

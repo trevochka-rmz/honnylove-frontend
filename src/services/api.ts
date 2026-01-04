@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:3050/api';
+import { API_BASE_URL as BASE_URL } from '@/config/api';
+
+const API_BASE_URL = `${BASE_URL}/api`;
 
 export interface ApiProduct {
   id: string;
@@ -61,7 +63,7 @@ export interface ProductsParams {
   isNew?: boolean;
   isBestseller?: boolean;
   isOnSale?: boolean;
-  sort?: 'popularity' | 'price_asc' | 'price_desc' | 'rating' | 'new_random' | 'id_desc';
+  sort?: 'popularity' | 'price_asc' | 'price_desc' | 'rating' | 'new_random' | 'newest' | 'id_desc';
 }
 
 // Category types
