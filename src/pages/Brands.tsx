@@ -6,6 +6,7 @@ import { useBrands, BrandsResult } from "@/hooks/useBrands";
 import { BrandsParams } from "@/services/api";
 import { Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
@@ -34,7 +35,7 @@ const Brands = () => {
   }
 
   if (filterType !== "all") {
-    apiParams.filter = filterType as 'featured' | 'popular' | 'new';
+    apiParams.filter = filterType as 'featured' | 'popular' | 'new' | 'recommended';
   }
 
   const { data, isLoading } = useBrands(apiParams);
@@ -131,7 +132,7 @@ const Brands = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Все бренды</SelectItem>
-              <SelectItem value="featured">Рекомендуемые</SelectItem>
+              <SelectItem value="recommended">Рекомендуемые</SelectItem>
               <SelectItem value="popular">Популярные</SelectItem>
               <SelectItem value="new">Новые</SelectItem>
             </SelectContent>
@@ -222,10 +223,21 @@ const Brands = () => {
             )}
           </>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-lg font-roboto text-muted-foreground">
-              Бренды не найдены. Попробуйте изменить запрос.
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-6 bg-secondary/50 rounded-full flex items-center justify-center">
+              <span className="text-5xl">🔍</span>
+            </div>
+            <h3 className="font-playfair text-2xl font-semibold text-foreground mb-3">
+              Бренды не найдены
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              {searchQuery 
+                ? `По запросу "${searchQuery}" ничего не найдено. Попробуйте изменить поисковый запрос.`
+                : 'В данной категории пока нет брендов. Скоро здесь появятся новые бренды!'}
             </p>
+            <Button variant="outline" onClick={() => { setSearchQuery(''); setFilterType('all'); }}>
+              Сбросить фильтры
+            </Button>
           </div>
         )}
 

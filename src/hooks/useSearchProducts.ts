@@ -1,6 +1,39 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, ProductsResponse } from '@/services/api';
-import { products as fallbackProducts, Product } from '@/data/products';
+
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  subcategory?: string;
+  price: number;
+  discountPrice?: number;
+  image: string;
+  images: string[];
+  description: string;
+  ingredients?: string;
+  usage?: string;
+  rating: number;
+  reviewCount: number;
+  variants?: { name: string; value: string }[];
+  inStock: boolean;
+  isNew?: boolean;
+  isBestseller?: boolean;
+  top_category_name?: string;
+  top_category_id?: number;
+  top_category_slug?: string;
+  parent_category_name?: string;
+  parent_category_id?: number;
+  parent_category_slug?: string;
+  category_name?: string;
+  category_id?: number;
+  category_slug?: string;
+  category_level?: number;
+  brand_slug?: string;
+  skin_type?: string;
+  slug?: string;
+}
 
 // Convert API product to internal Product type
 const mapApiProduct = (apiProduct: any): Product => ({
@@ -41,18 +74,8 @@ export const useSearchProducts = (query: string) => {
     queryKey: ['products', 'search', query],
     queryFn: async (): Promise<Product[]> => {
       if (!query.trim()) return [];
-      try {
-        // Use the getProducts API with search parameter
-        const response: ProductsResponse = await api.getProducts({ search: query });
-        return response.products.map(mapApiProduct);
-      } catch (error) {
-        console.warn('API not available, using fallback search');
-        const searchLower = query.toLowerCase();
-        return fallbackProducts.filter(p => 
-          p.name.toLowerCase().includes(searchLower) ||
-          p.brand.toLowerCase().includes(searchLower)
-        );
-      }
+      const response: ProductsResponse = await api.getProducts({ search: query });
+      return response.products.map(mapApiProduct);
     },
     enabled: query.length >= 2,
     staleTime: 30 * 1000,

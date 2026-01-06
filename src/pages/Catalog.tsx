@@ -55,6 +55,7 @@ const Catalog = () => {
   const newParam = searchParams.get('new');
   const bestsellerParam = searchParams.get('bestseller');
   const pageParam = searchParams.get('page');
+  const searchQueryParam = searchParams.get('search');
 
   const [currentPage, setCurrentPage] = useState(pageParam ? parseInt(pageParam) : 1);
   const [selectedBrandIds, setSelectedBrandIds] = useState<number[]>(
@@ -66,6 +67,7 @@ const Catalog = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<string>('id_desc');
   const [onlyOnSale, setOnlyOnSale] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>(searchQueryParam || '');
 
   // Fetch all categories for navigation
   const { data: allCategories = [] } = useAllCategories();
@@ -86,7 +88,11 @@ const Catalog = () => {
       setSelectedBrandIds([parseInt(brandIdParam)]);
       setCurrentPage(1);
     }
-  }, [categoryIdParam, brandIdParam]);
+    if (searchQueryParam) {
+      setSearchQuery(searchQueryParam);
+      setCurrentPage(1);
+    }
+  }, [categoryIdParam, brandIdParam, searchQueryParam]);
 
   // Map frontend sort values to API sort values
   const getSortParam = (sort: string): ProductsParams['sort'] => {
@@ -128,6 +134,9 @@ const Catalog = () => {
   if (onlyOnSale) {
     apiParams.isOnSale = true;
   }
+  if (searchQuery.trim()) {
+    apiParams.search = searchQuery.trim();
+  }
 
   const { data, isLoading } = useProducts(apiParams);
   
@@ -163,8 +172,17 @@ const Catalog = () => {
     setSelectedCategoryId(null);
     setPriceRange([0, 10000]);
     setOnlyOnSale(false);
+    setSearchQuery('');
     setCurrentPage(1);
     setSearchParams({});
+  };
+
+  const handleRemoveSearchFilter = () => {
+    setSearchQuery('');
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('search');
+    setSearchParams(newParams);
+    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -226,7 +244,7 @@ const Catalog = () => {
   };
 
   const selectedBrands = getSelectedBrandNames();
-  const hasActiveFilters = selectedBrandIds.length > 0 || priceRange[0] > 0 || priceRange[1] < 10000 || onlyOnSale;
+  const hasActiveFilters = selectedBrandIds.length > 0 || priceRange[0] > 0 || priceRange[1] < 10000 || onlyOnSale || searchQuery.trim();
 
   // Generate pagination numbers
   const getPaginationNumbers = () => {
@@ -364,6 +382,17 @@ const Catalog = () => {
               {/* Active Filters */}
               {hasActiveFilters && (
                 <div className="flex items-center gap-2 flex-wrap flex-1">
+                  {searchQuery.trim() && (
+                    <Badge variant="secondary" className="flex items-center gap-1 pr-1">
+                      Поиск: "{searchQuery}"
+                      <button
+                        onClick={handleRemoveSearchFilter}
+                        className="ml-1 hover:bg-muted rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
                   {selectedBrands.map((brand) => (
                     <Badge
                       key={brand.id}
@@ -484,10 +513,21 @@ const Catalog = () => {
                 )}
               </>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-lg font-roboto text-muted-foreground">
-                  Товары не найдены. Попробуйте изменить фильтры.
+              <div className="text-center py-16">
+                <div className="w-24 h-24 mx-auto mb-6 bg-secondary/50 rounded-full flex items-center justify-center">
+                  <span className="text-5xl">🔍</span>
+                </div>
+                <h3 className="font-playfair text-2xl font-semibold text-foreground mb-3">
+                  Товары не найдены
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                  {searchQuery 
+                    ? `По запросу "${searchQuery}" ничего не найдено.`
+                    : 'В данной категории пока нет товаров.'} Скоро здесь появятся новинки!
                 </p>
+                <Button variant="outline" onClick={handleReset}>
+                  Сбросить фильтры
+                </Button>
               </div>
             )}
           </div>
