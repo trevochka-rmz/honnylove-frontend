@@ -7,47 +7,66 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
+import { russianCities } from '@/data/cities';
 
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const user = useAuthStore((state) => state.user);
+  const { data: profile } = useProfile();
+  const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    address: '',
+    street: '',
     city: '',
     zipCode: '',
     comment: '',
     paymentMethod: 'card',
   });
 
+  const [saveAddress, setSaveAddress] = useState(true);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
     } else {
       fetchCart();
-      // Pre-fill form with user data
-      if (user) {
-        setFormData(prev => ({
-          ...prev,
-          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username,
-          email: user.email,
-          phone: user.phone || '',
-          address: user.address || '',
-        }));
-      }
     }
-  }, [isAuthenticated, navigate, fetchCart, user]);
+  }, [isAuthenticated, navigate, fetchCart]);
+
+  // Pre-fill form with profile data
+  useEffect(() => {
+    if (profile) {
+      const addressParts = profile.address?.split(',') || [];
+      const city = addressParts[0]?.trim() || '';
+      const street = addressParts.slice(1).join(',').trim() || '';
+      
+      setFormData(prev => ({
+        ...prev,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username,
+        email: profile.email,
+        phone: profile.phone || '',
+        city: city,
+        street: street,
+      }));
+    }
+  }, [profile]);
 
   // Filter only in-stock items
   const availableItems = items.filter(item => item.inStock && !item.outOfStock);
@@ -59,9 +78,19 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.address || !formData.city) {
+    if (!formData.name || !formData.phone || !formData.street || !formData.city) {
       toast.error('Пожалуйста, заполните все обязательные поля');
       return;
+    }
+
+    // Save address to profile if checkbox is checked
+    if (saveAddress && formData.city && formData.street) {
+      const fullAddress = `${formData.city}, ${formData.street}`;
+      try {
+        await updateProfile.mutateAsync({ address: fullAddress });
+      } catch (error) {
+        // Silent fail - order will still go through
+      }
     }
 
     toast.success('Заказ успешно оформлен!');
@@ -148,30 +177,42 @@ const Checkout = () => {
               {/* Delivery Address */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="font-playfair">Адрес доставки</CardTitle>
+                  <CardTitle className="font-playfair flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Адрес доставки
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="city" className="font-roboto">
                       Город <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="city"
-                      required
+                    <Select
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="font-roboto"
-                    />
+                      onValueChange={(value) => setFormData({ ...formData, city: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите город" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {russianCities.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
-                    <Label htmlFor="address" className="font-roboto">
-                      Адрес <span className="text-destructive">*</span>
+                    <Label htmlFor="street" className="font-roboto">
+                      Улица, дом, квартира <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                      id="address"
+                      id="street"
                       required
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="ул. Примерная, д. 1, кв. 1"
+                      value={formData.street}
+                      onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                       className="font-roboto"
                     />
                   </div>
@@ -186,6 +227,17 @@ const Checkout = () => {
                       className="font-roboto"
                     />
                   </div>
+                  
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={saveAddress}
+                      onChange={(e) => setSaveAddress(e.target.checked)}
+                      className="rounded border-border"
+                    />
+                    <span className="text-sm text-muted-foreground">Сохранить адрес в профиле</span>
+                  </label>
+                  
                   <div>
                     <Label htmlFor="comment" className="font-roboto">
                       Комментарий к заказу
@@ -195,6 +247,7 @@ const Checkout = () => {
                       value={formData.comment}
                       onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                       className="font-roboto"
+                      placeholder="Удобное время доставки, код домофона и т.д."
                     />
                   </div>
                 </CardContent>
