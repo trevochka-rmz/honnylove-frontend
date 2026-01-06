@@ -135,7 +135,7 @@ export interface BrandsParams {
   limit?: number;
   isActive?: boolean;
   search?: string;
-  filter?: 'featured' | 'popular' | 'new';
+  filter?: 'featured' | 'popular' | 'new' | 'recommended';
 }
 
 export interface AuthUser {

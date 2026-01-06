@@ -114,14 +114,12 @@ export const Header = () => {
               </div>
             </button>
           ))}
-          {searchResults.length > 6 && (
-            <button
-              onClick={handleSearchSubmit}
-              className="w-full px-4 py-2 text-sm text-primary hover:bg-muted transition-colors text-center"
-            >
-              Показать все результаты ({searchResults.length})
-            </button>
-          )}
+          <button
+            onClick={handleSearchSubmit}
+            className="w-full px-4 py-2 text-sm text-primary hover:bg-muted transition-colors text-center font-medium"
+          >
+            Показать все результаты ({searchResults.length})
+          </button>
         </div>
       ) : debouncedQuery.length >= 2 ? (
         <div className="p-4 text-center text-muted-foreground text-sm">
