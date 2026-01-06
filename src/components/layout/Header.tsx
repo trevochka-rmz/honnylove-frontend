@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Heart, User, Search, Menu, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Heart, User, Search, Menu, LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuthStore } from '@/store/authStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -14,12 +14,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useSearchProducts } from '@/hooks/useSearchProducts';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export const Header = () => {
   const { getTotalItems, fetchCart } = useCartApiStore();
   const { items: wishlistItems, fetchWishlist } = useWishlistStore();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const debouncedQuery = useDebounce(searchQuery, 300);
+  const { data: searchResults, isLoading: isSearching } = useSearchProducts(debouncedQuery);
 
   // Fetch cart and wishlist on auth change
   useEffect(() => {
@@ -29,8 +37,34 @@ export const Header = () => {
     }
   }, [isAuthenticated, fetchCart, fetchWishlist]);
 
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const totalItems = getTotalItems();
   const wishlistCount = wishlistItems.length;
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+    setIsSearchOpen(false);
+    setSearchQuery('');
+  };
 
   const navigation = [
     { name: 'Категории', href: '/catalog' },
@@ -39,6 +73,63 @@ export const Header = () => {
     { name: 'Доставка', href: '/delivery' },
     { name: 'Блог', href: '/blog' },
   ];
+
+  const SearchDropdown = () => (
+    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+      {isSearching ? (
+        <div className="p-4 text-center">
+          <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground mt-2">Поиск...</p>
+        </div>
+      ) : searchResults && searchResults.length > 0 ? (
+        <div className="py-2">
+          {searchResults.slice(0, 6).map((product) => (
+            <button
+              key={product.id}
+              onClick={() => handleProductClick(product.id)}
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
+            >
+              <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium line-clamp-1">{product.name}</p>
+                <p className="text-xs text-muted-foreground">{product.brand}</p>
+              </div>
+              <div className="text-sm font-medium text-primary">
+                {product.discountPrice ? (
+                  <>
+                    <span className="text-destructive">{product.discountPrice.toLocaleString('ru-RU')} ₽</span>
+                  </>
+                ) : (
+                  <span>{product.price.toLocaleString('ru-RU')} ₽</span>
+                )}
+              </div>
+            </button>
+          ))}
+          {searchResults.length > 6 && (
+            <button
+              onClick={handleSearchSubmit}
+              className="w-full px-4 py-2 text-sm text-primary hover:bg-muted transition-colors text-center"
+            >
+              Показать все результаты ({searchResults.length})
+            </button>
+          )}
+        </div>
+      ) : debouncedQuery.length >= 2 ? (
+        <div className="p-4 text-center text-muted-foreground text-sm">
+          Товары не найдены
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
@@ -84,17 +175,22 @@ export const Header = () => {
           </Link>
 
           {/* Search - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-xl">
-            <div className="relative w-full">
+          <div className="hidden md:flex flex-1 max-w-xl" ref={searchRef}>
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Поиск товаров..."
                 className="pl-10 font-roboto"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchOpen(e.target.value.length >= 2);
+                }}
+                onFocus={() => setIsSearchOpen(searchQuery.length >= 2)}
               />
-            </div>
+              {isSearchOpen && <SearchDropdown />}
+            </form>
           </div>
 
           {/* Actions */}
@@ -163,16 +259,21 @@ export const Header = () => {
 
         {/* Search - Mobile */}
         <div className="md:hidden mt-4">
-          <div className="relative w-full">
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Поиск товаров..."
               className="pl-10 font-roboto"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsSearchOpen(e.target.value.length >= 2);
+              }}
+              onFocus={() => setIsSearchOpen(searchQuery.length >= 2)}
             />
-          </div>
+            {isSearchOpen && <SearchDropdown />}
+          </form>
         </div>
       </div>
 
