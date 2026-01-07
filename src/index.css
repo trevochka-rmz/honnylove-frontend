@@ -22,16 +22,16 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
     --primary-hover: 330 100% 65%;
 
-    /* Green secondary/eco theme */
-    --secondary: 120 73% 75%;
-    --secondary-foreground: 120 40% 25%;
-    --secondary-hover: 120 73% 70%;
+    /* Warm rose secondary - harmonizes with pink primary */
+    --secondary: 330 40% 95%;
+    --secondary-foreground: 330 50% 30%;
+    --secondary-hover: 330 40% 92%;
 
     --muted: 330 40% 97%;
     --muted-foreground: 340 20% 50%;
 
-    --accent: 120 73% 90%;
-    --accent-foreground: 120 40% 25%;
+    --accent: 330 60% 92%;
+    --accent-foreground: 330 50% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
@@ -45,8 +45,8 @@ All colors MUST be HSL.
     /* Custom tokens for HonnyLove */
     --pink-light: 330 100% 95%;
     --pink-soft: 330 80% 85%;
-    --green-light: 120 73% 90%;
-    --green-soft: 120 60% 80%;
+    --rose-light: 330 60% 92%;
+    --rose-soft: 330 50% 85%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(330 100% 71%) 0%, hsl(330 80% 85%) 100%);
@@ -71,14 +71,14 @@ All colors MUST be HSL.
     --primary-foreground: 0 0% 100%;
     --primary-hover: 330 100% 65%;
 
-    --secondary: 120 60% 60%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 120 60% 55%;
+    --secondary: 330 30% 25%;
+    --secondary-foreground: 330 40% 95%;
+    --secondary-hover: 330 30% 30%;
 
     --muted: 340 30% 20%;
     --muted-foreground: 330 20% 65%;
 
-    --accent: 120 50% 25%;
+    --accent: 330 40% 20%;
     --accent-foreground: 330 40% 95%;
 
     --destructive: 0 62.8% 30.6%;

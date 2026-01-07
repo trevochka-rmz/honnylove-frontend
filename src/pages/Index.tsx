@@ -1,12 +1,13 @@
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { HeroSlider } from '@/components/home/HeroSlider';
-import { ProductCard } from '@/components/product/ProductCard';
+import { ProductCard, ProductCardSkeleton } from '@/components/product/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import { useAllCategories } from '@/hooks/useCategories';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
-import { Sparkles, TrendingUp, Star, Loader2 } from 'lucide-react';
+import { Sparkles, TrendingUp, Star, ImageOff } from 'lucide-react';
 
 const Index = () => {
   const { data: newProductsData, isLoading: isLoadingNew } = useProducts({ isNew: true, limit: 4 });
@@ -43,14 +44,20 @@ const Index = () => {
             </Button>
           </div>
           {isLoadingNew ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
             </div>
-          ) : (
+          ) : newProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {newProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Новинки скоро появятся!</p>
             </div>
           )}
         </section>
@@ -68,14 +75,20 @@ const Index = () => {
               </Button>
             </div>
             {isLoadingSale ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
               </div>
-            ) : (
+            ) : saleProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {saleProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>Акции скоро появятся!</p>
               </div>
             )}
           </div>
@@ -93,14 +106,20 @@ const Index = () => {
             </Button>
           </div>
           {isLoadingBestsellers ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
             </div>
-          ) : (
+          ) : bestsellers.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {bestsellers.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Бестселлеры скоро появятся!</p>
             </div>
           )}
         </section>

@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { ProductCard } from '@/components/product/ProductCard';
+import { ProductCard, ProductCardSkeleton } from '@/components/product/ProductCard';
 import { FilterSidebar } from '@/components/catalog/FilterSidebar';
 import { useProducts, ProductsResult } from '@/hooks/useProducts';
 import { useAllCategories, useCategory } from '@/hooks/useCategories';
 import { useBrandsBrief } from '@/hooks/useBrandsBrief';
 import { ProductsParams, ApiCategory } from '@/services/api';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { SlidersHorizontal, Loader2, ChevronRight, X } from 'lucide-react';
+import { SlidersHorizontal, Loader2, ChevronRight, X, ImageOff } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   Pagination,
@@ -23,7 +25,8 @@ import {
   PaginationEllipsis,
 } from '@/components/ui/pagination';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE_DESKTOP = 9;
+const ITEMS_PER_PAGE_MOBILE = 10;
 
 // Subcategory card component with fixed dimensions
 const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick: () => void }) => (
@@ -48,6 +51,9 @@ const SubcategoryCard = ({ category, onClick }: { category: ApiCategory; onClick
 );
 
 const Catalog = () => {
+  const isMobile = useIsMobile();
+  const ITEMS_PER_PAGE = isMobile ? ITEMS_PER_PAGE_MOBILE : ITEMS_PER_PAGE_DESKTOP;
+  
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const categoryIdParam = searchParams.get('categoryId');
@@ -279,8 +285,14 @@ const Catalog = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <Skeleton className="h-10 w-48 mb-4" />
+          <Skeleton className="h-6 w-32 mb-8" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(ITEMS_PER_PAGE)].map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
         </main>
         <Footer />
       </div>

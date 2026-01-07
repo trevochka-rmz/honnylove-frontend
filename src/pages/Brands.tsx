@@ -4,9 +4,11 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useBrands, BrandsResult } from "@/hooks/useBrands";
 import { BrandsParams } from "@/services/api";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ImageOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
@@ -22,16 +24,19 @@ const ITEMS_PER_PAGE = 15;
 
 const Brands = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+
+  // Debounce search input
+  const debouncedSearch = useDebounce(searchInput, 300);
 
   const apiParams: BrandsParams = {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
   };
 
-  if (searchQuery.trim()) {
-    apiParams.search = searchQuery.trim();
+  if (debouncedSearch.trim()) {
+    apiParams.search = debouncedSearch.trim();
   }
 
   if (filterType !== "all") {
@@ -55,7 +60,7 @@ const Brands = () => {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    setSearchInput(e.target.value);
     setCurrentPage(1);
   };
 
@@ -86,12 +91,40 @@ const Brands = () => {
     return pages;
   };
 
+  // Brand card skeleton for loading
+  const BrandCardSkeleton = () => (
+    <div className="bg-card rounded-2xl p-6 border border-border">
+      <div className="text-center">
+        <Skeleton className="w-20 h-20 mx-auto mb-4 rounded-full" />
+        <Skeleton className="h-6 w-24 mx-auto mb-2" />
+        <Skeleton className="h-4 w-full mb-1" />
+        <Skeleton className="h-4 w-3/4 mx-auto mb-3" />
+        <Skeleton className="h-6 w-20 mx-auto rounded-full" />
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <main className="container mx-auto px-4 py-8">
+          {/* Hero Section */}
+          <div className="text-center mb-8">
+            <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">
+              Наши бренды
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Мы тщательно отбираем лучшие бренды со всего мира
+            </p>
+          </div>
+          
+          {/* Skeleton Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mt-8">
+            {[...Array(10)].map((_, i) => (
+              <BrandCardSkeleton key={i} />
+            ))}
+          </div>
         </main>
         <Footer />
       </div>
@@ -121,7 +154,7 @@ const Brands = () => {
             <Input
               type="text"
               placeholder="Поиск брендов..."
-              value={searchQuery}
+              value={searchInput}
               onChange={handleSearchChange}
               className="pl-10"
             />
@@ -231,11 +264,11 @@ const Brands = () => {
               Бренды не найдены
             </h3>
             <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              {searchQuery 
-                ? `По запросу "${searchQuery}" ничего не найдено. Попробуйте изменить поисковый запрос.`
+              {searchInput 
+                ? `По запросу "${searchInput}" ничего не найдено. Попробуйте изменить поисковый запрос.`
                 : 'В данной категории пока нет брендов. Скоро здесь появятся новые бренды!'}
             </p>
-            <Button variant="outline" onClick={() => { setSearchQuery(''); setFilterType('all'); }}>
+            <Button variant="outline" onClick={() => { setSearchInput(''); setFilterType('all'); }}>
               Сбросить фильтры
             </Button>
           </div>

@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
-const API_BASE_URL = 'http://localhost:3050';
+import { API_BASE_URL } from '@/config/api';
 
 interface Banner {
   id: number;
@@ -38,7 +38,17 @@ const fallbackSlides = [
     button_text: 'Выбрать пижаму',
     button_link: '/catalog?categoryId=42',
     image_url: '',
-    gradient: 'from-secondary/20 to-green-soft/40',
+    gradient: 'from-secondary/40 to-pink-soft/60',
+  },
+  {
+    id: 2,
+    title: 'Уютные пижамы',
+    preheader: 'Комфорт на каждую ночь',
+    subtitle: 'Шёлк, хлопок, атлас — выбирайте идеальную пижаму',
+    button_text: 'Выбрать пижаму',
+    button_link: '/catalog?categoryId=42',
+    image_url: '',
+    gradient: 'from-pink-light/60 to-rose-soft/40',
   },
   {
     id: 3,
@@ -48,14 +58,14 @@ const fallbackSlides = [
     button_text: 'К акциям',
     button_link: '/sales',
     image_url: '',
-    gradient: 'from-primary/30 to-secondary/30',
+    gradient: 'from-primary/30 to-pink-soft/40',
   },
 ];
 
 const gradients = [
   'from-primary/20 to-pink-soft/40',
-  'from-secondary/20 to-green-soft/40',
-  'from-primary/30 to-secondary/30',
+  'from-pink-light/60 to-rose-soft/40',
+  'from-primary/30 to-pink-soft/40',
   'from-accent/30 to-primary/20',
 ];
 
