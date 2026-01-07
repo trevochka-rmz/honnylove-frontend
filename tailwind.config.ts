@@ -53,9 +53,9 @@ export default {
           light: "hsl(var(--pink-light))",
           soft: "hsl(var(--pink-soft))",
         },
-        green: {
-          light: "hsl(var(--green-light))",
-          soft: "hsl(var(--green-soft))",
+        rose: {
+          light: "hsl(var(--rose-light))",
+          soft: "hsl(var(--rose-soft))",
         },
       },
       boxShadow: {
