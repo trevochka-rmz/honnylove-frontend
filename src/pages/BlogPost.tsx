@@ -1,16 +1,37 @@
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { blogPosts } from "@/data/blogPosts";
+import { useBlogPost, useBlogs } from "@/hooks/useBlogs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, ArrowLeft, Share2, Heart } from "lucide-react";
+import { Calendar, Clock, User, ArrowLeft, Share2, Heart, Loader2 } from "lucide-react";
 
 const BlogPost = () => {
   const { id } = useParams();
-  const post = blogPosts.find(p => p.id === id);
+  const { data: post, isLoading, error } = useBlogPost(id || '');
+  const { data: allPosts } = useBlogs({ limit: 10 });
 
-  if (!post) {
+  // Get related posts by category
+  const relatedPosts = allPosts?.posts
+    ?.filter(p => p.id !== id && p.category === post?.category)
+    .slice(0, 3) || [];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-16 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Загружаем статью...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !post) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -25,10 +46,6 @@ const BlogPost = () => {
       </div>
     );
   }
-
-  const relatedPosts = blogPosts
-    .filter(p => p.id !== post.id && p.category === post.category)
-    .slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,7 +85,7 @@ const BlogPost = () => {
               </span>
               <span className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                {post.readTime} мин чтения
+                {post.read_time} мин чтения
               </span>
             </div>
           </header>
@@ -94,8 +111,11 @@ const BlogPost = () => {
               if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
                 return <p key={idx} className="font-semibold my-2">{paragraph.replace(/\*\*/g, '')}</p>;
               }
-              if (paragraph.startsWith('- ')) {
-                return <li key={idx} className="ml-4 my-1">{paragraph.replace('- ', '')}</li>;
+              if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
+                return <li key={idx} className="ml-4 my-1">{paragraph.replace(/^[-*] /, '')}</li>;
+              }
+              if (paragraph.match(/^\d+\. /)) {
+                return <li key={idx} className="ml-4 my-1 list-decimal">{paragraph.replace(/^\d+\. /, '')}</li>;
               }
               if (paragraph.trim()) {
                 return <p key={idx} className="text-muted-foreground my-4 leading-relaxed">{paragraph}</p>;
@@ -169,7 +189,7 @@ const BlogPost = () => {
                       {relatedPost.title}
                     </h3>
                     <span className="text-xs text-muted-foreground mt-2 block">
-                      {relatedPost.readTime} мин чтения
+                      {relatedPost.read_time} мин чтения
                     </span>
                   </div>
                 </Link>

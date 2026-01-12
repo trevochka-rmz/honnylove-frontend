@@ -17,12 +17,32 @@ const TelegramIcon = () => (
   </svg>
 );
 
+// Fallback categories if API fails
+const fallbackCategories = [
+  { id: 1, name: 'Уход за лицом', slug: 'uhod-za-litsom' },
+  { id: 2, name: 'Декоративная косметика', slug: 'dekorativnaya-kosmetika' },
+  { id: 3, name: 'Уход за телом', slug: 'uhod-za-telom' },
+  { id: 4, name: 'Коллаген', slug: 'kollagen' },
+  { id: 5, name: 'Домашняя одежда', slug: 'domashnyaya-odezhda' },
+  { id: 6, name: 'Уход за волосами', slug: 'uhod-za-volosami' },
+];
+
+// Fallback contacts
+const fallbackContacts = {
+  phone: '+7 (901) 678-20-80',
+  email: 'honnyloveskin@outlook.com',
+};
+
 export const Footer = () => {
   const { data: categories = [] } = useAllCategories();
   const { data: settings } = useSettings();
   
-  // Get only level 1 categories (top level)
-  const topLevelCategories = categories.slice(0, 6);
+  // Use API categories or fallback
+  const displayCategories = categories.length > 0 ? categories.slice(0, 6) : fallbackCategories;
+  
+  // Use API contacts or fallback
+  const phone = settings?.phone || fallbackContacts.phone;
+  const email = settings?.email || fallbackContacts.email;
 
   // Get social icon by name/url
   const getSocialIcon = (social: { name: string; url: string }) => {
@@ -74,11 +94,11 @@ export const Footer = () => {
             </div>
           </div>
 
-          {/* Categories from API */}
+          {/* Categories */}
           <div>
             <h4 className="font-roboto font-semibold mb-4">Категории</h4>
             <ul className="space-y-2 text-sm font-roboto">
-              {topLevelCategories.map((category) => (
+              {displayCategories.map((category) => (
                 <li key={category.id}>
                   <Link 
                     to={`/catalog?categoryId=${category.id}`} 
@@ -129,20 +149,20 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Contacts - from API */}
+          {/* Contacts */}
           <div>
             <h4 className="font-roboto font-semibold mb-4">Контакты</h4>
             <ul className="space-y-3 text-sm font-roboto">
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4" />
-                <a href={`tel:${settings?.phone || '+78001234567'}`} className="hover:text-primary transition-colors">
-                  {settings?.phone || '8 (800) 123-45-67'}
+                <a href={`tel:${phone.replace(/[\s()-]/g, '')}`} className="hover:text-primary transition-colors">
+                  {phone}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
                 <Mail className="h-4 w-4" />
-                <a href={`mailto:${settings?.email || 'info@honnylove.ru'}`} className="hover:text-primary transition-colors">
-                  {settings?.email || 'info@honnylove.ru'}
+                <a href={`mailto:${email}`} className="hover:text-primary transition-colors">
+                  {email}
                 </a>
               </li>
             </ul>

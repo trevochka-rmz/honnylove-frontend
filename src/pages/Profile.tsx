@@ -12,7 +12,6 @@ import {
   LogOut, 
   Heart, 
   ShoppingBag, 
-  Settings,
   Package,
   Edit,
   Loader2,
@@ -21,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 import { AddressDialog } from "@/components/profile/AddressDialog";
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
+import { OrdersSection } from "@/components/profile/OrdersSection";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -174,6 +174,11 @@ const Profile = () => {
               <p className="text-2xl font-bold">{profile?.discount_percentage || '0'}%</p>
               <p className="text-sm text-muted-foreground">Скидка</p>
             </div>
+          </div>
+
+          {/* Orders Section */}
+          <div className="mb-8">
+            <OrdersSection />
           </div>
 
           {/* Profile Info */}

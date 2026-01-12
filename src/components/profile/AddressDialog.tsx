@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,14 +10,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { russianCities } from '@/data/cities';
-import { MapPin, Loader2 } from 'lucide-react';
+import { MapPin, Loader2, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AddressDialogProps {
   open: boolean;
@@ -38,6 +45,15 @@ export const AddressDialog = ({
 }: AddressDialogProps) => {
   const [city, setCity] = useState(defaultCity);
   const [street, setStreet] = useState(defaultStreet);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState('');
+
+  // Filter cities based on search
+  const filteredCities = useMemo(() => {
+    if (!citySearch) return russianCities;
+    const search = citySearch.toLowerCase();
+    return russianCities.filter(c => c.toLowerCase().includes(search));
+  }, [citySearch]);
 
   const handleSave = () => {
     if (!city || !street.trim()) return;
@@ -61,18 +77,52 @@ export const AddressDialog = ({
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="city" className="font-roboto">Город</Label>
-            <Select value={city} onValueChange={setCity}>
-              <SelectTrigger>
-                <SelectValue placeholder="Выберите город" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {russianCities.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={cityOpen} onOpenChange={setCityOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={cityOpen}
+                  className="w-full justify-between font-normal"
+                >
+                  {city || "Выберите город..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Поиск города..." 
+                    value={citySearch}
+                    onValueChange={setCitySearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>Город не найден</CommandEmpty>
+                    <CommandGroup className="max-h-60 overflow-auto">
+                      {filteredCities.map((c) => (
+                        <CommandItem
+                          key={c}
+                          value={c}
+                          onSelect={(currentValue) => {
+                            setCity(currentValue);
+                            setCityOpen(false);
+                            setCitySearch('');
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              city === c ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {c}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="space-y-2">
