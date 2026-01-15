@@ -458,15 +458,15 @@ const Catalog = () => {
                 <span className="text-sm font-roboto text-muted-foreground hidden sm:inline">
                   Сортировка:
                 </span>
-                <Select value={sortBy} onValueChange={handleSortChange}>
-                  <SelectTrigger className="w-[180px] font-roboto">
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-[200px] font-roboto">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="id_desc">По умолчанию</SelectItem>
                     <SelectItem value="popular">По популярности</SelectItem>
-                    <SelectItem value="price-asc">Цена: по возрастанию</SelectItem>
-                    <SelectItem value="price-desc">Цена: по убыванию</SelectItem>
+                    <SelectItem value="price-asc">По возрастанию цены</SelectItem>
+                    <SelectItem value="price-desc">По убыванию цены</SelectItem>
                     <SelectItem value="rating">По рейтингу</SelectItem>
                     <SelectItem value="new">Сначала новые</SelectItem>
                   </SelectContent>
@@ -477,7 +477,7 @@ const Catalog = () => {
             {/* Products Grid */}
             {result.products.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300">
                   {result.products.map((product) => (
                     <div key={product.id} onClick={() => handleProductClick(product.id)}>
                       <ProductCard product={product} />

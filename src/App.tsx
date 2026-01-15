@@ -33,17 +33,20 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/catalog" element={<Catalog />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
+          {/* Product detail with category path */}
+          <Route path="/catalog/:topSlug/:parentSlug?/:subSlug?/product/:productSlug" element={<ProductDetail />} />
+          {/* Fallback for simple product URLs */}
+          <Route path="/product/:productSlug" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/brands" element={<Brands />} />
-          <Route path="/brands/:brandId" element={<BrandDetail />} />
+          <Route path="/brands/:brandSlug" element={<BrandDetail />} />
           <Route path="/sales" element={<Sales />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/delivery" element={<Delivery />} />
           <Route path="/about" element={<About />} />
           <Route path="/returns" element={<Returns />} />

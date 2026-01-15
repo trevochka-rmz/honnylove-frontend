@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Phone, Mail, Send } from 'lucide-react';
 import { useAllCategories } from '@/hooks/useCategories';
 import { useSettings } from '@/hooks/useSettings';
@@ -34,6 +34,7 @@ const fallbackContacts = {
 };
 
 export const Footer = () => {
+  const navigate = useNavigate();
   const { data: categories = [] } = useAllCategories();
   const { data: settings } = useSettings();
   
@@ -56,6 +57,12 @@ export const Footer = () => {
       return <TelegramIcon />;
     }
     return <Send className="h-5 w-5" />;
+  };
+
+  // Handle link click with scroll to top
+  const handleLinkClick = (to: string) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate(to);
   };
 
   return (
@@ -100,12 +107,12 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm font-roboto">
               {displayCategories.map((category) => (
                 <li key={category.id}>
-                  <Link 
-                    to={`/catalog?categoryId=${category.id}`} 
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                  <button 
+                    onClick={() => handleLinkClick(`/catalog?categoryId=${category.id}`)}
+                    className="text-muted-foreground hover:text-primary transition-colors text-left"
                   >
                     {category.name}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -117,34 +124,49 @@ export const Footer = () => {
             <ul className="space-y-2 text-sm font-roboto">
               {settings?.footer_links?.map((link, index) => (
                 <li key={index}>
-                  <Link to={link.url} className="text-muted-foreground hover:text-primary transition-colors">
+                  <button 
+                    onClick={() => handleLinkClick(link.url)} 
+                    className="text-muted-foreground hover:text-primary transition-colors text-left"
+                  >
                     {link.title}
-                  </Link>
+                  </button>
                 </li>
               ))}
               {(!settings?.footer_links || settings.footer_links.length === 0) && (
                 <>
                   <li>
-                    <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                    <button 
+                      onClick={() => handleLinkClick('/about')} 
+                      className="text-muted-foreground hover:text-primary transition-colors text-left"
+                    >
                       О нас
-                    </Link>
+                    </button>
                   </li>
                   <li>
-                    <Link to="/delivery" className="text-muted-foreground hover:text-primary transition-colors">
+                    <button 
+                      onClick={() => handleLinkClick('/delivery')} 
+                      className="text-muted-foreground hover:text-primary transition-colors text-left"
+                    >
                       Доставка и оплата
-                    </Link>
+                    </button>
                   </li>
                   <li>
-                    <Link to="/returns" className="text-muted-foreground hover:text-primary transition-colors">
+                    <button 
+                      onClick={() => handleLinkClick('/returns')} 
+                      className="text-muted-foreground hover:text-primary transition-colors text-left"
+                    >
                       Возврат товара
-                    </Link>
+                    </button>
                   </li>
                 </>
               )}
               <li>
-                <Link to="/contacts" className="text-muted-foreground hover:text-primary transition-colors">
+                <button 
+                  onClick={() => handleLinkClick('/contacts')} 
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
+                >
                   Контакты
-                </Link>
+                </button>
               </li>
             </ul>
           </div>

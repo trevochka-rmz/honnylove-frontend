@@ -104,6 +104,7 @@ export interface BrandsBriefResponse {
 
 export interface ApiBrand {
   id: number | string;
+  slug?: string;
   name: string;
   description: string;
   website?: string | null;

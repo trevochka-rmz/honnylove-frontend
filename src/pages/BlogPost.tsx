@@ -1,19 +1,19 @@
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { useBlogPost, useBlogs } from "@/hooks/useBlogs";
+import { useBlogPost, useBlogs, BlogPost as BlogPostType } from "@/hooks/useBlogs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, ArrowLeft, Share2, Heart, Loader2 } from "lucide-react";
 
 const BlogPost = () => {
-  const { id } = useParams();
-  const { data: post, isLoading, error } = useBlogPost(id || '');
+  const { slug } = useParams();
+  const { data: post, isLoading, error } = useBlogPost(slug || '');
   const { data: allPosts } = useBlogs({ limit: 10 });
 
   // Get related posts by category
   const relatedPosts = allPosts?.posts
-    ?.filter(p => p.id !== id && p.category === post?.category)
+    ?.filter(p => p.slug !== slug && p.category === post?.category)
     .slice(0, 3) || [];
 
   if (isLoading) {
@@ -174,7 +174,7 @@ const BlogPost = () => {
               {relatedPosts.map((relatedPost) => (
                 <Link
                   key={relatedPost.id}
-                  to={`/blog/${relatedPost.id}`}
+                  to={`/blog/${relatedPost.slug || relatedPost.id}`}
                   className="group bg-card rounded-xl overflow-hidden border border-border hover:border-primary transition-all"
                 >
                   <div className="aspect-[16/10] overflow-hidden">

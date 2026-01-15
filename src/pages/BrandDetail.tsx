@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, MapPin, Calendar, Sparkles, Loader2 } from "lucide-react";
 
 const BrandDetail = () => {
-  const { brandId } = useParams<{ brandId: string }>();
-  const { data: brand, isLoading: brandLoading } = useBrand(brandId || "");
+  const { brandSlug } = useParams<{ brandSlug: string }>();
+  const { data: brand, isLoading: brandLoading } = useBrand(brandSlug || "");
   
-  // Fetch products for this brand from API
-  const brandIdNum = brandId ? parseInt(brandId) : undefined;
+  // Fetch products for this brand from API using brand id
+  const brandIdNum = brand?.id ? parseInt(brand.id) : undefined;
   const { data: productsData, isLoading: productsLoading } = useProducts({ 
     brandId: brandIdNum, 
     limit: 4 
@@ -139,7 +139,7 @@ const BrandDetail = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-playfair text-2xl font-bold">Товары бренда</h2>
             <Button asChild variant="outline">
-              <Link to={`/catalog?brandId=${brandId}`}>
+              <Link to={`/catalog?brandId=${brand.id}`}>
                 Смотреть все
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -177,7 +177,7 @@ const BrandDetail = () => {
             Перейдите в каталог, чтобы увидеть полный ассортимент продукции этого бренда
           </p>
           <Button asChild size="lg">
-            <Link to={`/catalog?brandId=${brandId}`}>
+            <Link to={`/catalog?brandId=${brand.id}`}>
               Перейти в каталог
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
