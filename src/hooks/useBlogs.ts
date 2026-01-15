@@ -13,6 +13,7 @@ export interface BlogPost {
   tags: string[];
   created_at: string;
   updated_at: string;
+  slug?: string;
 }
 
 export interface BlogsResponse {

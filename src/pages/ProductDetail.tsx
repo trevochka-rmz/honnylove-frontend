@@ -15,10 +15,10 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { productSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: product, isLoading } = useProduct(id || '');
+  const { data: product, isLoading } = useProduct(productSlug || '');
   const { data: allProductsData } = useProducts({ limit: 50 });
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { addToWishlist, removeFromWishlist, isFavorite } = useWishlistStore();
@@ -48,7 +48,7 @@ const ProductDetail = () => {
   // Reset image index when product changes
   useEffect(() => {
     setSelectedImageIndex(0);
-  }, [id]);
+  }, [productSlug]);
 
   if (isLoading) {
     return (
@@ -265,7 +265,7 @@ const ProductDetail = () => {
               <img
                 src={allImages[selectedImageIndex] || product.image}
                 alt={product.name}
-                className="object-cover w-full h-full"
+                className="object-contain w-full h-full p-4"
               />
               {product.isNew && (
                 <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground font-roboto">

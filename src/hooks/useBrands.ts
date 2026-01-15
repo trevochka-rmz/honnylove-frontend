@@ -3,6 +3,7 @@ import { api, ApiBrand, BrandsParams, BrandsResponse } from '@/services/api';
 
 export interface Brand {
   id: string;
+  slug?: string;
   name: string;
   logo: string;
   description: string;
@@ -17,6 +18,7 @@ export interface Brand {
 // Convert API brand to internal Brand type
 const mapApiBrand = (apiBrand: ApiBrand): Brand => ({
   id: String(apiBrand.id),
+  slug: apiBrand.slug,
   name: apiBrand.name,
   description: apiBrand.description,
   logo: apiBrand.logo_url || apiBrand.logo || '/placeholder.svg',

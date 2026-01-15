@@ -1,8 +1,15 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Truck, CreditCard, Clock, MapPin, Phone, Mail } from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
+import { Truck, CreditCard, Clock, MapPin, Phone, Mail, Loader2 } from "lucide-react";
 
 const Delivery = () => {
+  const { data: settings, isLoading } = useSettings();
+  
+  // Fallback contacts
+  const phone = settings?.phone || '+7 (901) 678-20-80';
+  const email = settings?.email || 'honnyloveskin@outlook.com';
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -26,7 +33,7 @@ const Delivery = () => {
                 Курьерская доставка
               </h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li>• Доставка по Москве: 1-2 рабочих дня</li>
+                <li>• Доставка по Кызылу: 1-2 рабочих дня</li>
                 <li>• Доставка по России: 3-7 рабочих дней</li>
                 <li>• Стоимость: от 300₽</li>
                 <li>• <span className="text-primary font-medium">Бесплатная доставка при заказе от 3000₽</span></li>
@@ -85,13 +92,19 @@ const Delivery = () => {
             Остались вопросы?
           </h2>
           <div className="flex flex-wrap justify-center gap-8">
-            <a href="tel:+79991234567" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+            <a 
+              href={`tel:${phone.replace(/[\s()-]/g, '')}`} 
+              className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+            >
               <Phone className="h-5 w-5" />
-              +7 (999) 123-45-67
+              {phone}
             </a>
-            <a href="mailto:info@honnylove.ru" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
+            <a 
+              href={`mailto:${email}`} 
+              className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+            >
               <Mail className="h-5 w-5" />
-              info@honnylove.ru
+              {email}
             </a>
           </div>
           <p className="text-center text-muted-foreground mt-4">

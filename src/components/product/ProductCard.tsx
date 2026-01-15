@@ -292,17 +292,34 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     </Card>
   );
 
+  // Build product URL with category path
+  const getProductUrl = () => {
+    if (product.slug && product.top_category_slug) {
+      let path = `/catalog/${product.top_category_slug}`;
+      if (product.parent_category_slug) {
+        path += `/${product.parent_category_slug}`;
+      }
+      if (product.category_slug && product.category_level && product.category_level >= 3) {
+        path += `/${product.category_slug}`;
+      }
+      return `${path}/product/${product.slug}`;
+    }
+    return `/product/${product.slug || product.id}`;
+  };
+
+  const productUrl = getProductUrl();
+
   // On mobile, buttons don't navigate; on desktop, the whole card navigates
   if (isMobile) {
     return (
-      <div onClick={() => navigate(`/product/${product.id}`)}>
+      <div onClick={() => navigate(productUrl)}>
         {cardContent}
       </div>
     );
   }
 
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={productUrl}>
       {cardContent}
     </Link>
   );

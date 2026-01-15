@@ -88,7 +88,7 @@ const Blog = () => {
           </div>
         ) : featuredPost ? (
           <Link 
-            to={`/blog/${featuredPost.id}`}
+            to={`/blog/${featuredPost.slug || featuredPost.id}`}
             className="block mb-12 group"
           >
             <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary/20 to-accent/20">
@@ -184,7 +184,7 @@ const Blog = () => {
             {posts.map((post) => (
               <Link
                 key={post.id}
-                to={`/blog/${post.id}`}
+                to={`/blog/${post.slug || post.id}`}
                 className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary hover:shadow-lg transition-all"
               >
                 <div className="aspect-[16/10] overflow-hidden">

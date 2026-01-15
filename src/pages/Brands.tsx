@@ -184,7 +184,7 @@ const Brands = () => {
               {result.brands.map((brand) => (
                 <Link
                   key={brand.id}
-                  to={`/brands/${brand.id}`}
+                  to={`/brands/${brand.slug || brand.id}`}
                   className="group bg-card rounded-2xl p-6 border border-border hover:border-primary hover:shadow-lg transition-all duration-300"
                 >
                   <div className="text-center">
