@@ -61,7 +61,10 @@ const Brands = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
-    setCurrentPage(1);
+    // Only reset page if search is not empty
+    if (e.target.value.trim() || searchInput.trim()) {
+      setCurrentPage(1);
+    }
   };
 
   const handleFilterChange = (value: string) => {

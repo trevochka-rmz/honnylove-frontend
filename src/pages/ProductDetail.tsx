@@ -170,15 +170,8 @@ const ProductDetail = () => {
   };
 
   const handleBackToCatalog = () => {
-    // Navigate back with preserved filters
-    if (referrerPath && referrerPath.length > 0) {
-      const lastCat = referrerPath[referrerPath.length - 1];
-      navigate(`/catalog?categoryId=${lastCat.categoryId}`);
-    } else if (product.category_id) {
-      navigate(`/catalog?categoryId=${product.category_id}`);
-    } else {
-      navigate('/catalog');
-    }
+    // Use browser back to preserve filters and pagination state
+    navigate(-1);
   };
 
   return (

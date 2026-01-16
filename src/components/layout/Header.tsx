@@ -60,8 +60,23 @@ export const Header = () => {
     }
   };
 
-  const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`);
+  // Build product URL with category path for search results
+  const getProductUrl = (product: any) => {
+    if (product.slug && product.top_category_slug) {
+      let path = `/catalog/${product.top_category_slug}`;
+      if (product.parent_category_slug) {
+        path += `/${product.parent_category_slug}`;
+      }
+      if (product.category_slug && product.category_level && product.category_level >= 3) {
+        path += `/${product.category_slug}`;
+      }
+      return `${path}/product/${product.slug}`;
+    }
+    return `/product/${product.slug || product.id}`;
+  };
+
+  const handleProductClick = (product: any) => {
+    navigate(getProductUrl(product));
     setIsSearchOpen(false);
     setSearchQuery('');
   };
@@ -86,7 +101,7 @@ export const Header = () => {
           {searchResults.slice(0, 6).map((product) => (
             <button
               key={product.id}
-              onClick={() => handleProductClick(product.id)}
+              onClick={() => handleProductClick(product)}
               className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
             >
               <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
@@ -157,6 +172,7 @@ export const Header = () => {
                     key={item.name}
                     to={item.href}
                     className="text-lg font-roboto hover:text-primary transition-colors"
+                    onClick={() => setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0)}
                   >
                     {item.name}
                   </Link>

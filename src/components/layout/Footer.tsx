@@ -61,8 +61,11 @@ export const Footer = () => {
 
   // Handle link click with scroll to top
   const handleLinkClick = (to: string) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate(to);
+    // Scroll after navigation to ensure page is loaded
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
   };
 
   return (
