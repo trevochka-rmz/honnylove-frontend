@@ -10,7 +10,7 @@ import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartApiStore } from '@/store/cartApiStore';
-import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown, ChevronRight, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -36,7 +36,10 @@ const ProductDetail = () => {
   const referrerPath = location.state?.categoryPath || null;
 
   // Get all images
-  const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean) : [];
+  const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean).filter(img => img && img.trim() !== '' && !img.includes('undefined')) : [];
+  
+  // Check if images are valid
+  const hasValidImages = allImages.length > 0;
 
   // Set initial variant when product loads
   useEffect(() => {
@@ -255,11 +258,34 @@ const ProductDetail = () => {
 
             {/* Main Image */}
             <div className="flex-1 relative aspect-square rounded-xl overflow-hidden bg-muted">
-              <img
-                src={allImages[selectedImageIndex] || product.image}
-                alt={product.name}
-                className="object-contain w-full h-full p-4"
-              />
+              {hasValidImages ? (
+                <img
+                  src={allImages[selectedImageIndex] || product.image}
+                  alt={product.name}
+                  className="object-contain w-full h-full p-4"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30';
+                    placeholder.innerHTML = `
+                      <div class="p-4 rounded-full bg-secondary/50 mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary/50"><line x1="2" x2="22" y1="2" y2="22"></line><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"></path><line x1="13.5" x2="6" y1="13.5" y2="21"></line><path d="m18 12 2 2 2-2"></path><path d="M21 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"></path></svg>
+                      </div>
+                      <span class="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
+                      <span class="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
+                    `;
+                    (e.target as HTMLImageElement).parentElement?.appendChild(placeholder);
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30">
+                  <div className="p-4 rounded-full bg-secondary/50 mb-3">
+                    <ImageOff className="h-8 w-8 text-primary/50" />
+                  </div>
+                  <span className="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
+                  <span className="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
+                </div>
+              )}
               {product.isNew && (
                 <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground font-roboto">
                   Новинка

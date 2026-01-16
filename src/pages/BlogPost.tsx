@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { useBlogPost, useBlogs, BlogPost as BlogPostType } from "@/hooks/useBlogs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, ArrowLeft, Share2, Heart, Loader2 } from "lucide-react";
+import { Calendar, Clock, User, ArrowLeft, Share2, Heart, Loader2, ImageOff } from "lucide-react";
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -15,6 +15,11 @@ const BlogPost = () => {
   const relatedPosts = allPosts?.posts
     ?.filter(p => p.slug !== slug && p.category === post?.category)
     .slice(0, 3) || [];
+
+  // Check if an image URL is valid
+  const isValidImage = (url?: string) => {
+    return url && url.trim() !== '' && !url.includes('undefined');
+  };
 
   if (isLoading) {
     return (
@@ -91,12 +96,35 @@ const BlogPost = () => {
           </header>
 
           {/* Featured Image */}
-          <div className="aspect-video rounded-2xl overflow-hidden mb-8">
-            <img 
-              src={post.image} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
+          <div className="aspect-video rounded-2xl overflow-hidden mb-8 bg-secondary/30">
+            {isValidImage(post.image) ? (
+              <img 
+                src={post.image} 
+                alt={post.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const placeholder = document.createElement('div');
+                  placeholder.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30';
+                  placeholder.innerHTML = `
+                    <div class="p-4 rounded-full bg-secondary/50 mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary/50"><line x1="2" x2="22" y1="2" y2="22"></line><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"></path><line x1="13.5" x2="6" y1="13.5" y2="21"></line><path d="m18 12 2 2 2-2"></path><path d="M21 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"></path></svg>
+                    </div>
+                    <span class="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
+                    <span class="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
+                  `;
+                  (e.target as HTMLImageElement).parentElement?.appendChild(placeholder);
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30">
+                <div className="p-4 rounded-full bg-secondary/50 mb-3">
+                  <ImageOff className="h-8 w-8 text-primary/50" />
+                </div>
+                <span className="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
+                <span className="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -112,52 +140,52 @@ const BlogPost = () => {
                 return <p key={idx} className="font-semibold my-2">{paragraph.replace(/\*\*/g, '')}</p>;
               }
               if (paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
-                return <li key={idx} className="ml-4 my-1">{paragraph.replace(/^[-*] /, '')}</li>;
+                return (
+                  <li key={idx} className="ml-6 my-1">
+                    {paragraph.replace(/^[-*] /, '')}
+                  </li>
+                );
               }
-              if (paragraph.match(/^\d+\. /)) {
-                return <li key={idx} className="ml-4 my-1 list-decimal">{paragraph.replace(/^\d+\. /, '')}</li>;
+              if (paragraph.trim() === '') {
+                return <br key={idx} />;
               }
-              if (paragraph.trim()) {
-                return <p key={idx} className="text-muted-foreground my-4 leading-relaxed">{paragraph}</p>;
-              }
-              return null;
+              return <p key={idx} className="my-4 text-foreground/90 leading-relaxed">{paragraph}</p>;
             })}
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {post.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-sm">
-                #{tag}
-              </Badge>
-            ))}
-          </div>
-
-          {/* Share */}
-          <div className="flex items-center justify-between py-6 border-t border-b border-border mb-12">
-            <span className="text-muted-foreground">Понравилась статья?</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Heart className="w-4 h-4" />
-                Сохранить
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Share2 className="w-4 h-4" />
-                Поделиться
-              </Button>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {post.tags.map((tag, idx) => (
+                <Badge key={idx} variant="outline" className="text-muted-foreground">
+                  #{tag}
+                </Badge>
+              ))}
             </div>
+          )}
+
+          {/* Share and Save */}
+          <div className="flex items-center gap-4 py-6 border-t border-b border-border mb-12">
+            <Button variant="outline" className="gap-2">
+              <Share2 className="w-4 h-4" />
+              Поделиться
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <Heart className="w-4 h-4" />
+              Сохранить
+            </Button>
           </div>
 
           {/* Author Box */}
-          <div className="bg-secondary/30 rounded-2xl p-6 mb-12">
+          <div className="bg-card rounded-2xl p-6 border border-border mb-12">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl">
-                👩‍⚕️
+              <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                <User className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <h4 className="font-semibold">{post.author}</h4>
-                <p className="text-sm text-muted-foreground">
-                  Эксперт HonnyLove по уходу за кожей
+                <h4 className="font-playfair font-semibold text-lg">{post.author}</h4>
+                <p className="text-muted-foreground text-sm">
+                  Эксперт по корейской косметике и уходу за кожей
                 </p>
               </div>
             </div>
@@ -166,10 +194,8 @@ const BlogPost = () => {
 
         {/* Related Posts */}
         {relatedPosts.length > 0 && (
-          <section className="max-w-5xl mx-auto">
-            <h2 className="font-playfair text-2xl font-bold mb-6">
-              Похожие статьи
-            </h2>
+          <section className="max-w-4xl mx-auto">
+            <h2 className="font-playfair text-2xl font-bold mb-6">Похожие статьи</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {relatedPosts.map((relatedPost) => (
                 <Link
@@ -177,20 +203,30 @@ const BlogPost = () => {
                   to={`/blog/${relatedPost.slug || relatedPost.id}`}
                   className="group bg-card rounded-xl overflow-hidden border border-border hover:border-primary transition-all"
                 >
-                  <div className="aspect-[16/10] overflow-hidden">
-                    <img 
-                      src={relatedPost.image} 
-                      alt={relatedPost.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                  <div className="aspect-video overflow-hidden bg-secondary/30">
+                    {isValidImage(relatedPost.image) ? (
+                      <img 
+                        src={relatedPost.image} 
+                        alt={relatedPost.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30">
+                        <ImageOff className="h-6 w-6 text-primary/50 mb-1" />
+                        <span className="text-xs text-muted-foreground">Скоро</span>
+                      </div>
+                    )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="font-playfair font-semibold line-clamp-2 group-hover:text-primary transition-colors">
                       {relatedPost.title}
                     </h3>
-                    <span className="text-xs text-muted-foreground mt-2 block">
+                    <p className="text-sm text-muted-foreground mt-2">
                       {relatedPost.read_time} мин чтения
-                    </span>
+                    </p>
                   </div>
                 </Link>
               ))}
