@@ -84,21 +84,29 @@ const Catalog = () => {
   // Fetch brands for filter display
   const { data: brandsBrief = [] } = useBrandsBrief();
 
-  // Update from URL params
+  // Update from URL params - only on mount
   useEffect(() => {
-    if (categoryIdParam) {
+    let needsUpdate = false;
+    
+    if (categoryIdParam && parseInt(categoryIdParam) !== selectedCategoryId) {
       setSelectedCategoryId(parseInt(categoryIdParam));
-      setCurrentPage(1);
+      needsUpdate = true;
     }
-    if (brandIdParam) {
+    if (brandIdParam && !selectedBrandIds.includes(parseInt(brandIdParam))) {
       setSelectedBrandIds([parseInt(brandIdParam)]);
-      setCurrentPage(1);
+      needsUpdate = true;
     }
-    if (searchQueryParam) {
+    if (searchQueryParam && searchQueryParam !== searchQuery) {
       setSearchQuery(searchQueryParam);
+      needsUpdate = true;
+    }
+    if (pageParam && parseInt(pageParam) !== currentPage) {
+      setCurrentPage(parseInt(pageParam));
+    } else if (needsUpdate) {
       setCurrentPage(1);
     }
-  }, [categoryIdParam, brandIdParam, searchQueryParam]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   // Map frontend sort values to API sort values
   const getSortParam = (sort: string): ProductsParams['sort'] => {
@@ -274,12 +282,19 @@ const Catalog = () => {
     return pages;
   };
 
-  // Handle product click to pass category path
-  const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`, { 
-      state: { categoryPath: breadcrumbPath }
-    });
-  };
+  // Sync URL with current filters for back navigation
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedCategoryId) params.set('categoryId', selectedCategoryId.toString());
+    if (selectedBrandIds.length === 1) params.set('brandId', selectedBrandIds[0].toString());
+    if (currentPage > 1) params.set('page', currentPage.toString());
+    if (searchQuery) params.set('search', searchQuery);
+    if (newParam === 'true') params.set('new', 'true');
+    if (bestsellerParam === 'true') params.set('bestseller', 'true');
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    window.history.replaceState(null, '', `/catalog${newUrl}`);
+  }, [selectedCategoryId, selectedBrandIds, currentPage, searchQuery, newParam, bestsellerParam]);
 
   if (isLoading) {
     return (
@@ -479,9 +494,7 @@ const Catalog = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-300">
                   {result.products.map((product) => (
-                    <div key={product.id} onClick={() => handleProductClick(product.id)}>
-                      <ProductCard product={product} />
-                    </div>
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
 
