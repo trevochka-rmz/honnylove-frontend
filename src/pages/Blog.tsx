@@ -2,55 +2,102 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { useBlogs, BlogPost } from "@/hooks/useBlogs";
+import { useBlogs } from "@/hooks/useBlogs";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Loader2, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search, Calendar, Clock, Loader2, ImageOff } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const categories = ["Все", "Уход за кожей", "Тренды", "Домашняя одежда", "Ингредиенты", "Сезонный уход", "Лайфстайл"];
+const ITEMS_PER_PAGE = 6;
 
-// Skeleton component for blog card
 const BlogCardSkeleton = () => (
-  <div className="bg-card rounded-2xl overflow-hidden border border-border animate-pulse">
-    <div className="aspect-[16/10] bg-muted" />
+  <div className="bg-card rounded-2xl overflow-hidden border border-border">
+    <Skeleton className="aspect-[16/10] w-full" />
     <div className="p-5">
-      <div className="h-5 w-20 bg-muted rounded mb-3" />
-      <div className="h-5 w-full bg-muted rounded mb-2" />
-      <div className="h-4 w-3/4 bg-muted rounded mb-4" />
+      <Skeleton className="h-5 w-20 mb-3" />
+      <Skeleton className="h-6 w-full mb-2" />
+      <Skeleton className="h-4 w-3/4 mb-4" />
       <div className="flex justify-between">
-        <div className="h-4 w-16 bg-muted rounded" />
-        <div className="h-4 w-20 bg-muted rounded" />
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-20" />
       </div>
     </div>
   </div>
 );
 
 const Blog = () => {
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const POSTS_PER_PAGE = 6;
-
-  const { data, isLoading, error } = useBlogs({
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  const debouncedSearch = useDebounce(searchInput, 300);
+  
+  const apiParams = {
     page: currentPage,
-    limit: POSTS_PER_PAGE,
-    tags: selectedTag && selectedTag !== "Все" ? selectedTag.toLowerCase() : undefined,
-  });
+    limit: ITEMS_PER_PAGE,
+    search: debouncedSearch || undefined,
+    category: selectedCategory || undefined,
+  };
+  
+  const { data: result, isLoading } = useBlogs(apiParams);
+  
+  const posts = result?.posts || [];
+  const totalPages = result?.pages || 1;
+  
+  // Get unique categories from posts
+  const categories = [...new Set(posts.map(post => post.category))];
 
-  const posts = data?.posts || [];
-  const totalPages = data?.pages || 1;
-  const featuredPost = posts[0];
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  const handleTagChange = (tag: string) => {
-    setSelectedTag(tag === "Все" ? null : tag);
+  const handleCategoryClick = (category: string) => {
+    if (selectedCategory === category) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(category);
+    }
     setCurrentPage(1);
+  };
+
+  const getPaginationNumbers = () => {
+    const pages: (number | string)[] = [];
+    
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      if (currentPage > 3) {
+        pages.push('ellipsis-start');
+      }
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        pages.push(i);
+      }
+      if (currentPage < totalPages - 2) {
+        pages.push('ellipsis-end');
+      }
+      pages.push(totalPages);
+    }
+    
+    return pages;
+  };
+
+  // Check if an image URL is valid
+  const isValidImage = (url?: string) => {
+    return url && url.trim() !== '' && !url.includes('undefined');
   };
 
   return (
@@ -58,252 +105,182 @@ const Blog = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Hero */}
+        {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Блог HonnyLove
+            Блог о красоте
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Советы по уходу за кожей, тренды красоты, обзоры продуктов и секреты здорового сна
+            Советы по уходу за кожей, обзоры продуктов и секреты корейской косметики
           </p>
         </div>
 
-        {/* Featured Post */}
-        {isLoading ? (
-          <div className="mb-12">
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary/20 to-accent/20 animate-pulse">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="aspect-[4/3] md:aspect-auto bg-muted" />
-                <div className="p-6 md:p-10 flex flex-col justify-center">
-                  <div className="h-6 w-24 bg-muted rounded mb-4" />
-                  <div className="h-8 w-full bg-muted rounded mb-4" />
-                  <div className="h-4 w-3/4 bg-muted rounded mb-6" />
-                  <div className="flex gap-4">
-                    <div className="h-4 w-24 bg-muted rounded" />
-                    <div className="h-4 w-20 bg-muted rounded" />
-                  </div>
-                </div>
-              </div>
+        {/* Search and Filters */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+            <div className="relative w-full md:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Поиск статей..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 font-roboto"
+              />
             </div>
-          </div>
-        ) : featuredPost ? (
-          <Link 
-            to={`/blog/${featuredPost.slug || featuredPost.id}`}
-            className="block mb-12 group"
-          >
-            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary/20 to-accent/20">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="aspect-[4/3] md:aspect-auto">
-                  <img 
-                    src={featuredPost.image} 
-                    alt={featuredPost.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-6 md:p-10 flex flex-col justify-center">
-                  <Badge className="w-fit mb-4 bg-primary/20 text-primary hover:bg-primary/30">
-                    {featuredPost.category}
+            
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+                {categories.map((category) => (
+                  <Badge
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "secondary"}
+                    className="cursor-pointer hover:bg-primary/80 transition-colors"
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    {category}
                   </Badge>
-                  <h2 className="font-playfair text-2xl md:text-3xl font-bold mb-4 group-hover:text-primary transition-colors">
-                    {featuredPost.title}
-                  </h2>
-                  <p className="text-muted-foreground mb-6">
-                    {featuredPost.excerpt}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <User className="w-4 h-4" />
-                      {featuredPost.author}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {featuredPost.read_time} мин
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
-            </div>
-          </Link>
-        ) : null}
-
-        {/* Categories / Tags Filter */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => handleTagChange(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                (category === "Все" && !selectedTag) || selectedTag === category
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-foreground hover:bg-secondary/80"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-
-        {/* Active tag badge */}
-        {selectedTag && (
-          <div className="flex justify-center mb-6">
-            <Badge variant="outline" className="px-3 py-1.5 gap-2">
-              Фильтр: {selectedTag}
-              <button onClick={() => handleTagChange("Все")}>
-                <X className="w-3 h-3" />
-              </button>
-            </Badge>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <BlogCardSkeleton key={i} />
-            ))}
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !isLoading && (
-          <div className="text-center py-16">
-            <span className="text-6xl mb-4 block">💫</span>
-            <h3 className="text-xl font-semibold mb-2">Загружаем статьи...</h3>
-            <p className="text-muted-foreground mb-4">
-              Пожалуйста, подождите немного
-            </p>
-            <Button onClick={() => window.location.reload()}>
-              Обновить страницу
-            </Button>
-          </div>
-        )}
-
-        {/* Posts Grid */}
-        {!isLoading && !error && posts.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                to={`/blog/${post.slug || post.id}`}
-                className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary hover:shadow-lg transition-all"
-              >
-                <div className="aspect-[16/10] overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-5">
-                  <Badge variant="secondary" className="mb-3">
-                    {post.category}
-                  </Badge>
-                  <h3 className="font-playfair text-lg font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                    {post.excerpt}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {new Date(post.date).toLocaleDateString("ru-RU", { 
-                        day: "numeric", 
-                        month: "short" 
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {post.read_time} мин чтения
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && !error && posts.length === 0 && (
-          <div className="text-center py-16">
-            <span className="text-6xl mb-4 block">📝</span>
-            <h3 className="text-xl font-semibold mb-2">Статей не найдено</h3>
-            <p className="text-muted-foreground mb-4">
-              {selectedTag ? `В категории "${selectedTag}" пока нет статей` : 'Статьи скоро появятся'}
-            </p>
-            {selectedTag && (
-              <Button onClick={() => handleTagChange("Все")}>
-                Показать все статьи
-              </Button>
             )}
           </div>
-        )}
+        </div>
 
-        {/* Pagination */}
-        {!isLoading && totalPages > 1 && (
-          <div className="mt-10">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setCurrentPage(currentPage - 1);
-                    }}
-                    className={currentPage <= 1 ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(page);
-                      }}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
+        {/* Posts Grid */}
+        <div className="min-h-[400px]">
+          {isLoading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <BlogCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-16">
+              <span className="text-6xl mb-4 block">📝</span>
+              <h3 className="text-xl font-semibold mb-2">Статьи не найдены</h3>
+              <p className="text-muted-foreground mb-4">
+                Попробуйте изменить параметры поиска
+              </p>
+              <button
+                onClick={() => {
+                  setSearchInput("");
+                  setSelectedCategory(null);
+                  setCurrentPage(1);
+                }}
+                className="text-primary hover:underline"
+              >
+                Сбросить фильтры
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {posts.map((post) => (
+                  <Link
+                    key={post.id}
+                    to={`/blog/${post.slug || post.id}`}
+                    className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary hover:shadow-lg transition-all"
+                  >
+                    <div className="aspect-[16/10] overflow-hidden bg-secondary/30">
+                      {isValidImage(post.image) ? (
+                        <img 
+                          src={post.image} 
+                          alt={post.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30';
+                            placeholder.innerHTML = `
+                              <div class="p-3 rounded-full bg-secondary/50 mb-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary/50"><line x1="2" x2="22" y1="2" y2="22"></line><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"></path><line x1="13.5" x2="6" y1="13.5" y2="21"></line><path d="m18 12 2 2 2-2"></path><path d="M21 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"></path></svg>
+                              </div>
+                              <span class="text-xs text-muted-foreground">Скоро появится</span>
+                            `;
+                            (e.target as HTMLImageElement).parentElement?.appendChild(placeholder);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-secondary/50 to-rose-light/30">
+                          <div className="p-3 rounded-full bg-secondary/50 mb-2">
+                            <ImageOff className="h-6 w-6 text-primary/50" />
+                          </div>
+                          <span className="text-xs text-muted-foreground">Скоро появится</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <Badge variant="secondary" className="mb-3">
+                        {post.category}
+                      </Badge>
+                      <h3 className="font-playfair text-lg font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                        {post.excerpt}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(post.date).toLocaleDateString("ru-RU", { 
+                            day: "numeric", 
+                            month: "short" 
+                          })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {post.read_time} мин чтения
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
-                
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                    }}
-                    className={currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
+              </div>
 
-        {/* Newsletter */}
-        <section className="mt-16 bg-gradient-to-r from-primary/10 to-accent/10 rounded-3xl p-8 md:p-12 text-center">
-          <h2 className="font-playfair text-2xl md:text-3xl font-bold mb-4">
-            Подпишитесь на рассылку
-          </h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Получайте новые статьи, эксклюзивные скидки и советы по уходу за собой
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="Ваш email"
-              className="flex-1 px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors">
-              Подписаться
-            </button>
-          </div>
-        </section>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-12">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      
+                      {getPaginationNumbers().map((page, idx) => (
+                        <PaginationItem key={idx}>
+                          {typeof page === "string" ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
 
       <Footer />
