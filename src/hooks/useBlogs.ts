@@ -29,19 +29,52 @@ interface UseBlogsParams {
   page?: number;
   limit?: number;
   tags?: string;
+  search?: string;
 }
 
 const API_URL = 'https://honnylove.ru/api';
 
-export const useBlogs = ({ page = 1, limit = 6, tags }: UseBlogsParams = {}) => {
+// Fallback tags if API fails
+const FALLBACK_TAGS = [
+  "Домашняя одежда и уют",
+  "Здоровье и добавки",
+  "Красота и макияж",
+  "Новинки и обзоры",
+  "Советы экспертов",
+  "Уход за волосами",
+  "Уход за лицом",
+  "Уход за телом"
+];
+
+export const useBlogTags = () => {
   return useQuery({
-    queryKey: ['blogs', page, limit, tags],
+    queryKey: ['blog-tags'],
+    queryFn: async (): Promise<string[]> => {
+      try {
+        const response = await fetch(`${API_URL}/blogs/tags/all`);
+        if (!response.ok) throw new Error('Failed to fetch tags');
+        return response.json();
+      } catch (error) {
+        return FALLBACK_TAGS;
+      }
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    placeholderData: FALLBACK_TAGS,
+  });
+};
+
+export const useBlogs = ({ page = 1, limit = 6, tags, search }: UseBlogsParams = {}) => {
+  return useQuery({
+    queryKey: ['blogs', page, limit, tags, search],
     queryFn: async (): Promise<BlogsResponse> => {
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', limit.toString());
       if (tags) {
         params.append('tags', tags);
+      }
+      if (search) {
+        params.append('search', search);
       }
       
       const response = await fetch(`${API_URL}/blogs?${params.toString()}`);
