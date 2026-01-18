@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, CreditCard, Banknote, Smartphone } from 'lucide-react';
 import { russianCities } from '@/data/cities';
 
 const Checkout = () => {
@@ -37,10 +37,24 @@ const Checkout = () => {
     city: '',
     zipCode: '',
     comment: '',
-    paymentMethod: 'card',
+    paymentMethod: 'sbp',
   });
 
   const [saveAddress, setSaveAddress] = useState(true);
+  
+  // Get selected item IDs from sessionStorage
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('checkoutItems');
+    if (stored) {
+      try {
+        setSelectedIds(JSON.parse(stored));
+      } catch {
+        // If parsing fails, use all items
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,8 +82,18 @@ const Checkout = () => {
     }
   }, [profile]);
 
-  // Filter only in-stock items
-  const availableItems = items.filter(item => item.inStock && !item.outOfStock);
+  // Filter only selected in-stock items
+  const availableItems = useMemo(() => {
+    const inStockItems = items.filter(item => item.inStock && !item.outOfStock);
+    
+    // If we have selected IDs, filter by them
+    if (selectedIds.length > 0) {
+      return inStockItems.filter(item => selectedIds.includes(item.id));
+    }
+    
+    // Otherwise return all in-stock items
+    return inStockItems;
+  }, [items, selectedIds]);
 
   const totalPrice = availableItems.reduce((sum, item) => sum + item.subtotal, 0);
   const deliveryFee = totalPrice >= 3000 ? 0 : 300;
@@ -94,6 +118,7 @@ const Checkout = () => {
     }
 
     toast.success('Заказ успешно оформлен!');
+    sessionStorage.removeItem('checkoutItems');
     await clearCart();
     navigate('/');
   };
@@ -262,18 +287,34 @@ const Checkout = () => {
                   <RadioGroup
                     value={formData.paymentMethod}
                     onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                    className="space-y-3"
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="card" id="card" />
-                      <Label htmlFor="card" className="font-roboto cursor-pointer">
-                        Банковская карта
-                      </Label>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
+                      <RadioGroupItem value="sbp" id="sbp" />
+                      <div className="flex items-center gap-2 flex-1">
+                        <Smartphone className="h-5 w-5 text-primary" />
+                        <Label htmlFor="sbp" className="font-roboto cursor-pointer flex-1">
+                          СБП (Система быстрых платежей)
+                        </Label>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
+                      <RadioGroupItem value="card" id="card" />
+                      <div className="flex items-center gap-2 flex-1">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <Label htmlFor="card" className="font-roboto cursor-pointer flex-1">
+                          Банковская карта
+                        </Label>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
                       <RadioGroupItem value="cash" id="cash" />
-                      <Label htmlFor="cash" className="font-roboto cursor-pointer">
-                        Наличными при получении
-                      </Label>
+                      <div className="flex items-center gap-2 flex-1">
+                        <Banknote className="h-5 w-5 text-primary" />
+                        <Label htmlFor="cash" className="font-roboto cursor-pointer flex-1">
+                          Наличными при получении
+                        </Label>
+                      </div>
                     </div>
                   </RadioGroup>
                 </CardContent>

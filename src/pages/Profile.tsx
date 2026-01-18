@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
+import { useCartApiStore } from "@/store/cartApiStore";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { 
   User, 
@@ -26,6 +27,8 @@ import { toast } from "sonner";
 const Profile = () => {
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuthStore();
+  const clearCartStore = useCartApiStore((state) => state.clearCart);
+  const resetCartState = useCartApiStore.setState;
   const { data: profile, isLoading, refetch } = useProfile();
   const updateProfile = useUpdateProfile();
   
@@ -48,8 +51,10 @@ const Profile = () => {
   }, [profile, addressPromptShown]);
 
   const handleLogout = () => {
+    // Clear cart state before logout
+    resetCartState({ items: [], summary: null });
     logout();
-    navigate("/");
+    navigate("/auth");
   };
 
   const handleAddressSave = async (addressData: { city: string; street: string; fullAddress: string }) => {

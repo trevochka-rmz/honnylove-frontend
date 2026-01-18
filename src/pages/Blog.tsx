@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { useBlogs } from "@/hooks/useBlogs";
+import { useBlogs, useBlogTags } from "@/hooks/useBlogs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Calendar, Clock, Loader2, ImageOff } from "lucide-react";
+import { Search, Calendar, Clock, ImageOff } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -38,36 +38,43 @@ const BlogCardSkeleton = () => (
 const Blog = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchInput, setSearchInput] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   
   const debouncedSearch = useDebounce(searchInput, 300);
+  
+  // Fetch tags from API
+  const { data: tags = [] } = useBlogTags();
   
   const apiParams = {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     search: debouncedSearch || undefined,
-    category: selectedCategory || undefined,
+    tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
   };
   
   const { data: result, isLoading } = useBlogs(apiParams);
   
   const posts = result?.posts || [];
   const totalPages = result?.pages || 1;
-  
-  // Get unique categories from posts
-  const categories = [...new Set(posts.map(post => post.category))];
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleCategoryClick = (category: string) => {
-    if (selectedCategory === category) {
-      setSelectedCategory(null);
-    } else {
-      setSelectedCategory(category);
-    }
+  const handleTagClick = (tag: string) => {
+    setSelectedTags(prev => {
+      if (prev.includes(tag)) {
+        return prev.filter(t => t !== tag);
+      } else {
+        return [...prev, tag];
+      }
+    });
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value);
     setCurrentPage(1);
   };
 
@@ -117,33 +124,42 @@ const Blog = () => {
 
         {/* Search and Filters */}
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
+          <div className="flex flex-col gap-4 mb-6">
             <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Поиск статей..."
                 value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 font-roboto"
               />
             </div>
             
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-2 justify-center md:justify-end">
-                {categories.map((category) => (
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
                   <Badge
-                    key={category}
-                    variant={selectedCategory === category ? "default" : "secondary"}
+                    key={tag}
+                    variant={selectedTags.includes(tag) ? "default" : "secondary"}
                     className="cursor-pointer hover:bg-primary/80 transition-colors"
-                    onClick={() => handleCategoryClick(category)}
+                    onClick={() => handleTagClick(tag)}
                   >
-                    {category}
+                    {tag}
                   </Badge>
                 ))}
+                {selectedTags.length > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-destructive/10 text-destructive border-destructive/30"
+                    onClick={() => {
+                      setSelectedTags([]);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Сбросить теги
+                  </Badge>
+                )}
               </div>
             )}
           </div>
@@ -167,7 +183,7 @@ const Blog = () => {
               <button
                 onClick={() => {
                   setSearchInput("");
-                  setSelectedCategory(null);
+                  setSelectedTags([]);
                   setCurrentPage(1);
                 }}
                 className="text-primary hover:underline"
