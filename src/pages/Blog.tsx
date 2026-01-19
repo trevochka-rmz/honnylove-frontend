@@ -123,46 +123,48 @@ const Blog = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 space-y-6">
-          {/* Search - full width */}
-          <div className="relative w-full max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Поиск статей..."
-              value={searchInput}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-12 py-6 text-base font-roboto rounded-full border-2 focus:border-primary"
-            />
-          </div>
-          
-          {/* Tags - centered */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant={selectedTags.includes(tag) ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/80 transition-colors px-4 py-1.5 text-sm"
-                  onClick={() => handleTagClick(tag)}
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {selectedTags.length > 0 && (
-                <Badge
-                  variant="outline"
-                  className="cursor-pointer hover:bg-destructive/10 text-destructive border-destructive/30 px-4 py-1.5 text-sm"
-                  onClick={() => {
-                    setSelectedTags([]);
-                    setCurrentPage(1);
-                  }}
-                >
-                  Сбросить теги
-                </Badge>
-              )}
+        <div className="mb-8">
+          <div className="flex flex-col gap-4 mb-6">
+            {/* Search - full width on desktop, normal on mobile */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Поиск статей..."
+                value={searchInput}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10 font-roboto"
+              />
             </div>
-          )}
+            
+            {/* Tags - centered on desktop, left-aligned on mobile */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 md:justify-center">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant={selectedTags.includes(tag) ? "default" : "secondary"}
+                    className="cursor-pointer hover:bg-primary/80 transition-colors"
+                    onClick={() => handleTagClick(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+                {selectedTags.length > 0 && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-destructive/10 text-destructive border-destructive/30"
+                    onClick={() => {
+                      setSelectedTags([]);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Сбросить теги
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Posts Grid */}
