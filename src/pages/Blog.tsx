@@ -113,8 +113,8 @@ const Blog = () => {
       
       <main className="container mx-auto px-4 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-4">
+        <div className="text-center mb-6">
+          <h1 className="font-playfair text-4xl md:text-5xl font-bold text-foreground mb-3">
             Блог о красоте
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -124,7 +124,7 @@ const Blog = () => {
 
         {/* Search and Filters */}
         <div className="mb-8">
-          <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col gap-3 mb-6">
             {/* Search - full width on desktop, normal on mobile */}
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
