@@ -4,7 +4,8 @@ import { Footer } from "@/components/layout/Footer";
 import { useBlogPost, useBlogs, BlogPost as BlogPostType } from "@/hooks/useBlogs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, ArrowLeft, Share2, Heart, Loader2, ImageOff } from "lucide-react";
+import { Calendar, Clock, User, ArrowLeft, Share2, Loader2, ImageOff } from "lucide-react";
+import { toast } from "sonner";
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -153,28 +154,28 @@ const BlogPost = () => {
             })}
           </div>
 
-          {/* Tags */}
+          {/* Tags with Share Button */}
           {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-8">
+            <div className="flex flex-wrap items-center gap-2 mb-8">
               {post.tags.map((tag, idx) => (
                 <Badge key={idx} variant="outline" className="text-muted-foreground">
                   #{tag}
                 </Badge>
               ))}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="ml-auto gap-2 text-muted-foreground hover:text-primary"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success("Ссылка скопирована!");
+                }}
+              >
+                <Share2 className="w-4 h-4" />
+                Поделиться
+              </Button>
             </div>
           )}
-
-          {/* Share and Save */}
-          <div className="flex items-center gap-4 py-6 border-t border-b border-border mb-12">
-            <Button variant="outline" className="gap-2">
-              <Share2 className="w-4 h-4" />
-              Поделиться
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Heart className="w-4 h-4" />
-              Сохранить
-            </Button>
-          </div>
 
           {/* Author Box */}
           <div className="bg-card rounded-2xl p-6 border border-border mb-12">
