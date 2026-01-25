@@ -110,6 +110,11 @@ const Returns = () => {
                   </a>
                 )}
               </div>
+              {settings?.address && (
+                <p className="text-muted-foreground mt-4">
+                  📍 {settings.address}
+                </p>
+              )}
             </div>
           </div>
         </div>
