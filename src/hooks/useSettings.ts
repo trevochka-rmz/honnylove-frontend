@@ -17,6 +17,7 @@ export interface SiteSettings {
   phone: string;
   email: string;
   description: string;
+  address?: string;
   social_links: SocialLink[];
   footer_links: FooterLink[];
   created_at: string;

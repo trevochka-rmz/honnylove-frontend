@@ -14,6 +14,9 @@ const Favorites = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   useEffect(() => {
+    // Scroll to top on mount
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     if (!isAuthenticated) {
       navigate("/auth");
     } else {
