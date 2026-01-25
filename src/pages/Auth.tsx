@@ -264,9 +264,9 @@ const Auth = () => {
                     }
                   />
                   <Label htmlFor="terms" className="text-sm text-muted-foreground leading-tight">
-                    Даю согласие на{" "}
+                    Я даю согласие на обработку персональных данных в соответствии с{' '}
                     <Link to="/privacy" className="text-primary hover:underline">
-                      обработку персональных данных
+                      политикой о конфиденциальности
                     </Link>
                   </Label>
                 </div>

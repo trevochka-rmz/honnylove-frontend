@@ -107,6 +107,12 @@ const Delivery = () => {
               {email}
             </a>
           </div>
+          {settings?.address && (
+            <p className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
+              <MapPin className="h-5 w-5" />
+              {settings.address}
+            </p>
+          )}
           <p className="text-center text-muted-foreground mt-4">
             Мы работаем ежедневно с 10:00 до 20:00
           </p>
