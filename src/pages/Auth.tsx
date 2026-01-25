@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -26,6 +26,11 @@ const Auth = () => {
     confirmPassword: "",
     agreeToTerms: false,
   });
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -58,6 +63,15 @@ const Auth = () => {
         toast({
           title: "Ошибка",
           description: "Введите имя пользователя",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password.length < 6) {
+        toast({
+          title: "Ошибка",
+          description: "Длина пароля не менее 6 символов",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -208,6 +222,7 @@ const Auth = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className="pl-10 pr-10"
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -217,6 +232,9 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {!isLogin && (
+                <p className="text-xs text-muted-foreground">Длина пароля не менее 6 символов</p>
+              )}
             </div>
 
             {!isLogin && (
@@ -246,13 +264,9 @@ const Auth = () => {
                     }
                   />
                   <Label htmlFor="terms" className="text-sm text-muted-foreground leading-tight">
-                    Я согласен с{" "}
-                    <Link to="/terms" className="text-primary hover:underline">
-                      условиями использования
-                    </Link>{" "}
-                    и{" "}
+                    Даю согласие на{" "}
                     <Link to="/privacy" className="text-primary hover:underline">
-                      политикой конфиденциальности
+                      обработку персональных данных
                     </Link>
                   </Label>
                 </div>

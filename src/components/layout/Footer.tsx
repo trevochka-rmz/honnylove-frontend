@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Phone, Mail, Send } from 'lucide-react';
+import { Phone, Mail, Send, MapPin } from 'lucide-react';
 import { useAllCategories } from '@/hooks/useCategories';
 import { useSettings } from '@/hooks/useSettings';
 
@@ -31,6 +31,7 @@ const fallbackCategories = [
 const fallbackContacts = {
   phone: '+7 (901) 678-20-80',
   email: 'honnyloveskin@outlook.com',
+  address: 'Г.Кызыл, ТЦ «Алексеевский» отдел №10 (цокольный этаж)',
 };
 
 export const Footer = () => {
@@ -44,6 +45,7 @@ export const Footer = () => {
   // Use API contacts or fallback
   const phone = settings?.phone || fallbackContacts.phone;
   const email = settings?.email || fallbackContacts.email;
+  const address = settings?.address || fallbackContacts.address;
 
   // Get social icon by name/url
   const getSocialIcon = (social: { name: string; url: string }) => {
@@ -179,16 +181,20 @@ export const Footer = () => {
             <h4 className="font-roboto font-semibold mb-4">Контакты</h4>
             <ul className="space-y-3 text-sm font-roboto">
               <li className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4 flex-shrink-0" />
                 <a href={`tel:${phone.replace(/[\s()-]/g, '')}`} className="hover:text-primary transition-colors">
                   {phone}
                 </a>
               </li>
               <li className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 flex-shrink-0" />
                 <a href={`mailto:${email}`} className="hover:text-primary transition-colors">
                   {email}
                 </a>
+              </li>
+              <li className="flex items-start gap-2 text-muted-foreground">
+                <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>{address}</span>
               </li>
             </ul>
           </div>

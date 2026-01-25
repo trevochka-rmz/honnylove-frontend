@@ -68,8 +68,7 @@ const Contacts = () => {
                   <div>
                     <h3 className="font-medium mb-1">Адрес</h3>
                     <p className="text-muted-foreground">
-                      Россия, г. Москва<br />
-                      (Интернет-магазин)
+                      {settings?.address || 'Г.Кызыл, ТЦ «Алексеевский» отдел №10 (цокольный этаж)'}
                     </p>
                   </div>
                 </div>
