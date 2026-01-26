@@ -304,24 +304,26 @@ const ProductDetail = () => {
             <p className="text-sm text-primary font-roboto mb-2">{product.brand}</p>
             <h1 className="text-3xl font-playfair font-bold mb-4">{product.name}</h1>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.floor(product.rating)
-                        ? 'fill-primary text-primary'
-                        : 'text-muted-foreground'
-                    }`}
-                  />
-                ))}
+            {/* Rating - only show if there are reviews */}
+            {product.reviewCount > 0 && (
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < Math.floor(product.rating)
+                          ? 'fill-primary text-primary'
+                          : 'text-muted-foreground'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-roboto">
+                  {product.rating} ({product.reviewCount} отзывов)
+                </span>
               </div>
-              <span className="text-sm font-roboto">
-                {product.rating} ({product.reviewCount} отзывов)
-              </span>
-            </div>
+            )}
 
             {/* Price */}
             <div className="flex items-center gap-3 mb-6">

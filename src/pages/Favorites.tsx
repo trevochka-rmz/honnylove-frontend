@@ -13,16 +13,24 @@ const Favorites = () => {
   const { items, isLoading, fetchWishlist, clearWishlist } = useWishlistStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
+  // Scroll to top once on mount
   useEffect(() => {
-    // Scroll to top on mount
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+  }, []);
+
+  // Handle auth redirect
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth");
-    } else {
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Fetch wishlist data
+  useEffect(() => {
+    if (isAuthenticated) {
       fetchWishlist();
     }
-  }, [isAuthenticated, navigate, fetchWishlist]);
+  }, [isAuthenticated, fetchWishlist]);
 
   if (!isAuthenticated) {
     return null;

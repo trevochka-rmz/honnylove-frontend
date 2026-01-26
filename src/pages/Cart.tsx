@@ -18,16 +18,24 @@ const Cart = () => {
   // Selected items for checkout (only in-stock items can be selected)
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+  // Scroll to top once on mount
   useEffect(() => {
-    // Scroll to top on mount
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+  }, []);
+
+  // Handle auth redirect
+  useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth");
-    } else {
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Fetch cart data
+  useEffect(() => {
+    if (isAuthenticated) {
       fetchCart();
     }
-  }, [isAuthenticated, navigate, fetchCart]);
+  }, [isAuthenticated, fetchCart]);
 
   // Items in stock
   const itemsInStock = useMemo(() => 
