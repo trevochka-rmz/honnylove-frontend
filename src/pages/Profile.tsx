@@ -15,8 +15,7 @@ import {
   ShoppingBag, 
   Package,
   Edit,
-  Loader2,
-  Star
+  Loader2
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AddressDialog } from "@/components/profile/AddressDialog";
@@ -173,11 +172,6 @@ const Profile = () => {
               <Package className="w-8 h-8 text-primary mx-auto mb-2" />
               <p className="text-2xl font-bold">{profile?.orderCount || 0}</p>
               <p className="text-sm text-muted-foreground">Заказов</p>
-            </div>
-            <div className="bg-card rounded-xl p-4 text-center border border-border">
-              <Star className="w-8 h-8 text-primary mx-auto mb-2" />
-              <p className="text-2xl font-bold">{profile?.discount_percentage || '0'}%</p>
-              <p className="text-sm text-muted-foreground">Скидка</p>
             </div>
           </div>
 

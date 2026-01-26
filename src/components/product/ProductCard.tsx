@@ -242,24 +242,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           {product.name}
         </h3>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-3">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3 w-3 ${
-                  i < Math.floor(product.rating)
-                    ? 'fill-primary text-primary'
-                    : 'text-muted-foreground'
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-xs text-muted-foreground font-roboto">
-            ({product.reviewCount})
-          </span>
-        </div>
+        {/* Category */}
+        {product.category_name && (
+          <p className="text-xs text-muted-foreground font-roboto mb-3">
+            {product.category_name}
+          </p>
+        )}
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
