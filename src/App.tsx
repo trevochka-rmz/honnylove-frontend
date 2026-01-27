@@ -8,6 +8,8 @@ import Catalog from "./pages/Catalog";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import OrderStatus from "./pages/OrderStatus";
 import Brands from "./pages/Brands";
 import BrandDetail from "./pages/BrandDetail";
 import Sales from "./pages/Sales";
@@ -40,6 +42,8 @@ const App = () => (
           <Route path="/product/:productSlug" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/order/:orderId" element={<OrderStatus />} />
           <Route path="/brands" element={<Brands />} />
           <Route path="/brands/:brandSlug" element={<BrandDetail />} />
           <Route path="/sales" element={<Sales />} />
