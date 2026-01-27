@@ -16,15 +16,18 @@ import {
 } from '@/components/ui/select';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, MapPin, CreditCard, Banknote, Smartphone } from 'lucide-react';
+import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck } from 'lucide-react';
 import { russianCities } from '@/data/cities';
+import { orderApi } from '@/services/orderApi';
 
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { getValidToken } = useAuth();
   const { data: profile } = useProfile();
   const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
@@ -41,6 +44,7 @@ const Checkout = () => {
   });
 
   const [saveAddress, setSaveAddress] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Get selected item IDs from sessionStorage
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -96,7 +100,10 @@ const Checkout = () => {
   }, [items, selectedIds]);
 
   const totalPrice = availableItems.reduce((sum, item) => sum + item.subtotal, 0);
-  const deliveryFee = totalPrice >= 3000 ? 0 : 300;
+  
+  // Delivery logic: Free for Kyzyl, free if >= 3000, otherwise 300₽
+  const isKyzyl = formData.city === 'Кызыл';
+  const deliveryFee = isKyzyl ? 0 : (totalPrice >= 3000 ? 0 : 300);
   const finalTotal = totalPrice + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,20 +114,73 @@ const Checkout = () => {
       return;
     }
 
-    // Save address to profile if checkbox is checked
-    if (saveAddress && formData.city && formData.street) {
-      const fullAddress = `${formData.city}, ${formData.street}`;
-      try {
-        await updateProfile.mutateAsync({ address: fullAddress });
-      } catch (error) {
-        // Silent fail - order will still go through
-      }
+    if (availableItems.length === 0) {
+      toast.error('Нет товаров для оформления');
+      return;
     }
 
-    toast.success('Заказ успешно оформлен!');
-    sessionStorage.removeItem('checkoutItems');
-    await clearCart();
-    navigate('/');
+    setIsSubmitting(true);
+
+    try {
+      const token = await getValidToken();
+      if (!token) {
+        toast.error('Необходима авторизация');
+        navigate('/auth');
+        return;
+      }
+
+      // Save address to profile if checkbox is checked
+      if (saveAddress && formData.city && formData.street) {
+        const fullAddress = `${formData.city}, ${formData.street}`;
+        try {
+          await updateProfile.mutateAsync({ address: fullAddress });
+        } catch (error) {
+          // Silent fail - order will still go through
+        }
+      }
+
+      const shippingAddress = `${formData.city}, ${formData.street}${formData.zipCode ? `, ${formData.zipCode}` : ''}`;
+      const selectedItemIds = availableItems.map(item => item.id);
+
+      const checkoutData = {
+        selected_items: selectedItemIds,
+        shipping_address: shippingAddress,
+        payment_method: formData.paymentMethod as 'cash' | 'card' | 'sbp',
+        notes: formData.comment || undefined,
+        shipping_cost: deliveryFee,
+        tax_amount: 0,
+        discount_amount: 0,
+      };
+
+      if (formData.paymentMethod === 'cash') {
+        // Cash payment - simple checkout
+        const response = await orderApi.checkoutCash(token, checkoutData);
+        
+        sessionStorage.removeItem('checkoutItems');
+        await clearCart();
+        
+        navigate(`/order-success?order_id=${response.data.order.id}&order_number=${response.data.order_number}`);
+      } else {
+        // Card or SBP - checkout with payment
+        const response = await orderApi.checkoutWithPayment(token, checkoutData);
+        
+        sessionStorage.removeItem('checkoutItems');
+        await clearCart();
+        
+        // Redirect to YooKassa payment page
+        if (response.data.payment?.confirmation_url) {
+          window.location.href = response.data.payment.confirmation_url;
+        } else {
+          toast.error('Ошибка получения ссылки на оплату');
+          navigate(`/order/${response.data.order.id}`);
+        }
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error(error instanceof Error ? error.message : 'Ошибка оформления заказа');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isAuthenticated) return null;
@@ -228,6 +288,23 @@ const Checkout = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  
+                  {/* Delivery info hint */}
+                  {formData.city && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 text-sm">
+                      <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                      {isKyzyl ? (
+                        <span className="text-primary font-medium">Бесплатная доставка по г. Кызыл</span>
+                      ) : totalPrice >= 3000 ? (
+                        <span className="text-primary font-medium">Бесплатная доставка при заказе от 3000₽</span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          Доставка: 300₽ (бесплатно при заказе от 3000₽)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
                   <div>
                     <Label htmlFor="street" className="font-roboto">
                       Улица, дом, квартира <span className="text-destructive">*</span>
@@ -359,8 +436,13 @@ const Checkout = () => {
                     </div>
                     <div className="flex justify-between text-sm font-roboto">
                       <span className="text-muted-foreground">Доставка:</span>
-                      <span>{deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} ₽`}</span>
+                      <span className={deliveryFee === 0 ? 'text-primary font-medium' : ''}>
+                        {deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} ₽`}
+                      </span>
                     </div>
+                    {isKyzyl && deliveryFee === 0 && (
+                      <p className="text-xs text-primary">* Бесплатная доставка по г. Кызыл</p>
+                    )}
                   </div>
 
                   <div className="border-t border-border pt-4">
@@ -372,8 +454,20 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" size="lg" className="w-full font-roboto">
-                    Оформить заказ
+                  <Button 
+                    type="submit" 
+                    size="lg" 
+                    className="w-full font-roboto"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Оформление...
+                      </>
+                    ) : (
+                      'Оформить заказ'
+                    )}
                   </Button>
                 </CardContent>
               </Card>

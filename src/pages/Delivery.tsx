@@ -33,9 +33,9 @@ const Delivery = () => {
                 Курьерская доставка
               </h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li>• Доставка по Кызылу: 1-2 рабочих дня</li>
+                <li>• <span className="text-primary font-medium">По г. Кызыл — бесплатно!</span> (1-2 рабочих дня)</li>
                 <li>• Доставка по России: 3-7 рабочих дней</li>
-                <li>• Стоимость: от 300₽</li>
+                <li>• Стоимость: 300₽ (фиксированная)</li>
                 <li>• <span className="text-primary font-medium">Бесплатная доставка при заказе от 3000₽</span></li>
               </ul>
             </div>
