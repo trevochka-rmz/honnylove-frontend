@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -12,6 +12,7 @@ const Favorites = () => {
   const navigate = useNavigate();
   const { items, isLoading, fetchWishlist, clearWishlist } = useWishlistStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasFetched = useRef(false);
   
   // Scroll to top once on mount
   useEffect(() => {
@@ -25,12 +26,13 @@ const Favorites = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch wishlist data
+  // Fetch wishlist data - only once
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasFetched.current) {
+      hasFetched.current = true;
       fetchWishlist();
     }
-  }, [isAuthenticated, fetchWishlist]);
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return null;

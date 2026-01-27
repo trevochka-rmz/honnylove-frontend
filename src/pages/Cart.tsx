@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
+import { useProfile } from '@/hooks/useProfile';
 import { Minus, Plus, Trash2, ShoppingBag, Loader2, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -14,6 +15,10 @@ const Cart = () => {
   const { items, summary, isLoading, fetchCart, updateQuantity, removeFromCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const navigate = useNavigate();
+  const hasFetched = useRef(false);
+  
+  // Get user profile for city check
+  const { data: profile } = useProfile();
 
   // Selected items for checkout (only in-stock items can be selected)
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -30,12 +35,13 @@ const Cart = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch cart data
+  // Fetch cart data - only once
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasFetched.current) {
+      hasFetched.current = true;
       fetchCart();
     }
-  }, [isAuthenticated, fetchCart]);
+  }, [isAuthenticated]);
 
   // Items in stock
   const itemsInStock = useMemo(() => 
@@ -79,7 +85,15 @@ const Cart = () => {
     selectedItems.reduce((sum, item) => sum + item.subtotal, 0),
     [selectedItems]
   );
-  const deliveryFee = selectedTotalPrice >= 3000 ? 0 : 300;
+  
+  // Check if user's city is Kyzyl for free shipping
+  const isKyzyl = useMemo(() => {
+    if (!profile?.address) return false;
+    return profile.address.toLowerCase().includes('кызыл');
+  }, [profile?.address]);
+  
+  // Free shipping for Kyzyl, or orders >= 3000₽
+  const deliveryFee = isKyzyl || selectedTotalPrice >= 3000 ? 0 : 300;
   const finalTotal = selectedTotalPrice + deliveryFee;
 
   if (!isAuthenticated) {
@@ -309,10 +323,15 @@ const Cart = () => {
                         : deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} ₽`}
                     </span>
                   </div>
-                  {selectedTotalPrice > 0 && selectedTotalPrice < 3000 && (
+                  {selectedTotalPrice > 0 && selectedTotalPrice < 3000 && !isKyzyl && (
                     <p className="text-xs text-muted-foreground font-roboto">
                       Добавьте товаров на {(3000 - selectedTotalPrice).toLocaleString('ru-RU')} ₽ для
                       бесплатной доставки
+                    </p>
+                  )}
+                  {isKyzyl && (
+                    <p className="text-xs text-primary font-roboto">
+                      Бесплатная доставка по Кызылу
                     </p>
                   )}
                 </div>
