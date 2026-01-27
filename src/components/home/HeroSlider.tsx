@@ -41,16 +41,6 @@ const fallbackSlides = [
     gradient: 'from-secondary/40 to-pink-soft/60',
   },
   {
-    id: 2,
-    title: 'Уютные пижамы',
-    preheader: 'Комфорт на каждую ночь',
-    subtitle: 'Шёлк, хлопок, атлас — выбирайте идеальную пижаму',
-    button_text: 'Выбрать пижаму',
-    button_link: '/catalog?categoryId=42',
-    image_url: '',
-    gradient: 'from-pink-light/60 to-rose-soft/40',
-  },
-  {
     id: 3,
     title: 'Акции до -40%',
     preheader: 'Специальные предложения',
