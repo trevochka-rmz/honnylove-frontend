@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { AddressDialog } from "@/components/profile/AddressDialog";
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
 import { OrdersSection } from "@/components/profile/OrdersSection";
+import { EmailVerificationBanner } from "@/components/profile/EmailVerificationBanner";
 import { toast } from "sonner";
 
 const Profile = () => {
@@ -78,6 +79,10 @@ const Profile = () => {
     }
   };
 
+  const handleEmailVerified = () => {
+    refetch();
+  };
+
   if (!isAuthenticated) {
     return null;
   }
@@ -132,6 +137,14 @@ const Profile = () => {
             </div>
           </div>
 
+          {/* Email Verification Banner */}
+          {profile && profile.is_verified === false && (
+            <EmailVerificationBanner 
+              email={profile.email} 
+              onVerified={handleEmailVerified}
+            />
+          )}
+
           {/* Address Banner - shown prominently if address exists */}
           {profile?.address && (
             <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-8 flex items-center justify-between">
@@ -150,8 +163,8 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* Quick Stats - Fixed to 3 columns */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
             <Link 
               to="/favorites"
               className="bg-card rounded-xl p-4 text-center hover:shadow-lg transition-shadow border border-border"
