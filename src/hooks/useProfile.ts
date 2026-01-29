@@ -13,6 +13,7 @@ export interface ProfileData {
   address: string | null;
   discount_percentage: string;
   is_active: boolean;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
   orderCount: number;

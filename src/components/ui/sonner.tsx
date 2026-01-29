@@ -1,26 +1,27 @@
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme="light"
       className="toaster group"
-      position="bottom-left"
+      position="bottom-right"
       closeButton
-      richColors
+      richColors={false}
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-          closeButton: "group-[.toast]:bg-background group-[.toast]:border-border",
+            "group toast group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary group-[.toaster]:shadow-lg",
+          description: "group-[.toast]:text-primary-foreground/90",
+          actionButton: "group-[.toast]:bg-background group-[.toast]:text-primary",
+          cancelButton: "group-[.toast]:bg-background/80 group-[.toast]:text-primary",
+          closeButton: "group-[.toast]:bg-primary-foreground/20 group-[.toast]:text-primary-foreground group-[.toast]:border-primary-foreground/20 group-[.toast]:hover:bg-primary-foreground/30",
+          error: "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary",
+          success: "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary",
+          warning: "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary",
+          info: "group-[.toaster]:bg-primary group-[.toaster]:text-primary-foreground group-[.toaster]:border-primary",
         },
       }}
       {...props}
