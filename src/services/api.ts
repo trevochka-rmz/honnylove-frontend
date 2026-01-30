@@ -300,7 +300,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) {
@@ -314,7 +313,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -328,7 +326,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ refreshToken }),
     });
     if (!response.ok) throw new Error('Failed to refresh token');
@@ -339,7 +336,6 @@ export const api = {
   async getWishlist(token: string): Promise<WishlistItem[]> {
     const response = await fetch(`${API_BASE_URL}/wishlist`, {
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch wishlist');
     return response.json();
@@ -352,7 +348,6 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify({ product_id: productId }),
     });
     if (!response.ok) {
@@ -366,7 +361,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to remove from wishlist');
   },
@@ -375,7 +369,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/wishlist`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to clear wishlist');
   },
@@ -384,7 +377,6 @@ export const api = {
   async getCart(token: string): Promise<CartResponse> {
     const response = await fetch(`${API_BASE_URL}/cart`, {
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch cart');
     return response.json();
@@ -397,7 +389,6 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify({ product_id: productId, quantity }),
     });
     if (!response.ok) {
@@ -414,7 +405,6 @@ export const api = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify({ quantity }),
     });
     if (!response.ok) throw new Error('Failed to update cart item');
@@ -425,7 +415,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to remove from cart');
     return response.json();
@@ -435,7 +424,6 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/cart`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to clear cart');
     return response.json();

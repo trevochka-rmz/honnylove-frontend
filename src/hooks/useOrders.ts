@@ -58,17 +58,18 @@ export const useOrders = () => {
   return useQuery({
     queryKey: ['orders', accessToken],
     queryFn: async (): Promise<Order[]> => {
+      if (!accessToken) throw new Error('No access token');
+      
       const response = await fetch(`${API_URL}/orders`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data: OrdersResponse = await response.json();
       return data.orders || [];
     },
-    enabled: !!accessToken && accessToken !== 'cookie-auth',
+    enabled: !!accessToken,
     staleTime: 2 * 60 * 1000,
   });
 };
@@ -79,17 +80,18 @@ export const useOrderDetail = (orderId: number | null) => {
   return useQuery({
     queryKey: ['order', orderId],
     queryFn: async (): Promise<Order> => {
+      if (!accessToken) throw new Error('No access token');
+      
       const response = await fetch(`${API_URL}/orders/${orderId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch order details');
       const data: OrderDetailResponse = await response.json();
       return data.order;
     },
-    enabled: !!accessToken && accessToken !== 'cookie-auth' && !!orderId,
+    enabled: !!accessToken && !!orderId,
     staleTime: 2 * 60 * 1000,
   });
 };

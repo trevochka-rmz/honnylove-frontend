@@ -115,7 +115,6 @@ export const orderApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify({ selected_items: selectedItems }),
     });
     if (!response.ok) throw new Error('Failed to fetch selected items');
@@ -130,7 +129,6 @@ export const orderApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -148,7 +146,6 @@ export const orderApi = {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -164,7 +161,6 @@ export const orderApi = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
     });
     if (!response.ok) throw new Error('Failed to fetch payment status');
     return response.json();

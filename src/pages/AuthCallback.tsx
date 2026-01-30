@@ -31,7 +31,6 @@ const AuthCallback = () => {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-            credentials: 'include',
           });
 
           if (response.ok) {
@@ -48,9 +47,7 @@ const AuthCallback = () => {
       } else {
         // No tokens in URL - try to fetch user info using cookies
         try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-            credentials: 'include',
-          });
+          const response = await fetch(`${API_BASE_URL}/api/auth/me`);
 
           if (response.ok) {
             const data = await response.json();
@@ -66,9 +63,7 @@ const AuthCallback = () => {
             }
           } else {
             // If /api/auth/me fails, try to get profile directly (cookies might already be set)
-            const profileResponse = await fetch(`${API_BASE_URL}/api/users/profile`, {
-              credentials: 'include',
-            });
+            const profileResponse = await fetch(`${API_BASE_URL}/api/users/profile`);
             
             if (profileResponse.ok) {
               const user = await profileResponse.json();
