@@ -35,6 +35,7 @@ const ForgotPassword = () => {
       const response = await fetch(`${API_BASE_URL}/api/auth/password/reset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email }),
       });
 
@@ -77,6 +78,7 @@ const ForgotPassword = () => {
       const response = await fetch(`${API_BASE_URL}/api/auth/password/reset/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, code, newPassword }),
       });
 
