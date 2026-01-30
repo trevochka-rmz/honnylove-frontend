@@ -56,6 +56,7 @@ export interface ProductsParams {
   categoryId?: number;
   subcategoryId?: number;
   brandId?: number;
+  brandIds?: string; // comma-separated brand IDs e.g. "1,2,3"
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -224,6 +225,7 @@ export const api = {
     if (params.categoryId) searchParams.append('categoryId', params.categoryId.toString());
     if (params.subcategoryId) searchParams.append('subcategoryId', params.subcategoryId.toString());
     if (params.brandId) searchParams.append('brandId', params.brandId.toString());
+    if (params.brandIds) searchParams.append('brandId', params.brandIds); // comma-separated string
     if (params.search) searchParams.append('search', params.search);
     if (params.minPrice !== undefined) searchParams.append('minPrice', params.minPrice.toString());
     if (params.maxPrice !== undefined) searchParams.append('maxPrice', params.maxPrice.toString());
