@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
+import { API_BASE_URL } from '@/config/api';
 
 export interface OrderItem {
   productId: number;
@@ -41,7 +42,7 @@ interface OrderDetailResponse {
   data: Order;
 }
 
-const API_URL = 'https://honnylove.ru/api';
+const API_URL = `${API_BASE_URL}/api`;
 
 export const useOrders = () => {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -53,6 +54,7 @@ export const useOrders = () => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data: OrdersResponse = await response.json();
@@ -73,6 +75,7 @@ export const useOrderDetail = (orderId: number | null) => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch order details');
       const data: OrderDetailResponse = await response.json();

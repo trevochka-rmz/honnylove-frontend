@@ -15,6 +15,7 @@ import Sales from "./pages/Sales";
 import Favorites from "./pages/Favorites";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
+import AuthCallback from "./pages/AuthCallback";
 import Profile from "./pages/Profile";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/sales" element={<Sales />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/blog" element={<Blog />} />

@@ -28,6 +28,7 @@ export const EmailVerificationBanner = ({ email, onVerified }: EmailVerification
       const response = await fetch(`${API_BASE_URL}/api/auth/verify/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email }),
       });
 
@@ -58,6 +59,7 @@ export const EmailVerificationBanner = ({ email, onVerified }: EmailVerification
       const response = await fetch(`${API_BASE_URL}/api/auth/verify/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, code }),
       });
 

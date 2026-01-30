@@ -41,6 +41,7 @@ export const useProfile = () => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch profile');
       return response.json();
@@ -66,6 +67,7 @@ export const useUpdateProfile = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('Failed to update profile');
