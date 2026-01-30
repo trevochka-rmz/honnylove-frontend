@@ -3,13 +3,15 @@ import { useAuthStore } from '@/store/authStore';
 import { API_BASE_URL } from '@/config/api';
 
 export interface OrderItem {
-  productId: number;
-  productName: string;
-  productImage: string;
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_sku: string;
+  product_image: string;
   quantity: number;
   price: number;
-  discountPrice: number | null;
-  subtotal: number;
+  discount_price: number | null;
+  line_total: number;
 }
 
 export interface Order {
@@ -26,20 +28,26 @@ export interface Order {
   discount_amount: string;
   tracking_number: string | null;
   notes: string | null;
+  items_count: string;
+  total_items_quantity: string;
   items: OrderItem[];
-  user_email?: string;
-  user_first_name?: string;
-  user_last_name?: string;
 }
 
 interface OrdersResponse {
   success: boolean;
-  data: Order[];
+  orders: Order[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
 }
 
 interface OrderDetailResponse {
   success: boolean;
-  data: Order;
+  order: Order;
 }
 
 const API_URL = `${API_BASE_URL}/api`;
@@ -48,9 +56,9 @@ export const useOrders = () => {
   const accessToken = useAuthStore((state) => state.accessToken);
   
   return useQuery({
-    queryKey: ['orders'],
+    queryKey: ['orders', accessToken],
     queryFn: async (): Promise<Order[]> => {
-      const response = await fetch(`${API_URL}/orders/orders`, {
+      const response = await fetch(`${API_URL}/orders`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -58,9 +66,9 @@ export const useOrders = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data: OrdersResponse = await response.json();
-      return data.data || [];
+      return data.orders || [];
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && accessToken !== 'cookie-auth',
     staleTime: 2 * 60 * 1000,
   });
 };
@@ -79,9 +87,9 @@ export const useOrderDetail = (orderId: number | null) => {
       });
       if (!response.ok) throw new Error('Failed to fetch order details');
       const data: OrderDetailResponse = await response.json();
-      return data.data;
+      return data.order;
     },
-    enabled: !!accessToken && !!orderId,
+    enabled: !!accessToken && accessToken !== 'cookie-auth' && !!orderId,
     staleTime: 2 * 60 * 1000,
   });
 };

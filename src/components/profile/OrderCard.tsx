@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Order, getOrderStatusInfo } from '@/hooks/useOrders';
-import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp, Package } from 'lucide-react';
-import { API_BASE_URL } from '@/config/api';
 
 interface OrderCardProps {
   order: Order;
@@ -27,6 +25,15 @@ export const OrderCard = ({ order }: OrderCardProps) => {
   // Progress steps for active orders
   const progressSteps = ['Оформлен', 'Оплачен', 'Собирается', 'Отправлен', 'Доставлен'];
   const currentStep = statusInfo.step;
+
+  const paymentMethodLabel = (method: string) => {
+    switch (method) {
+      case 'card': return 'Банковская карта';
+      case 'cash': return 'Наличные при получении';
+      case 'sbp': return 'СБП';
+      default: return method;
+    }
+  };
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -88,15 +95,15 @@ export const OrderCard = ({ order }: OrderCardProps) => {
           <div>
             <h4 className="font-medium mb-3 flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Товары в заказе ({order.items.length})
+              Товары в заказе ({order.items_count})
             </h4>
             <div className="space-y-3">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex items-center gap-3">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
                   <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden flex-shrink-0">
                     <img 
-                      src={item.productImage.startsWith('/') ? `${API_BASE_URL}${item.productImage}` : item.productImage}
-                      alt={item.productName}
+                      src={item.product_image}
+                      alt={item.product_name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder.svg';
@@ -104,12 +111,12 @@ export const OrderCard = ({ order }: OrderCardProps) => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{item.productName}</p>
+                    <p className="font-medium text-sm truncate">{item.product_name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {item.quantity} шт. × {formatPrice(item.discountPrice || item.price)}
+                      {item.quantity} шт. × {formatPrice(item.discount_price || item.price)}
                     </p>
                   </div>
-                  <p className="font-medium">{formatPrice(item.subtotal)}</p>
+                  <p className="font-medium">{formatPrice(item.line_total)}</p>
                 </div>
               ))}
             </div>
@@ -123,10 +130,7 @@ export const OrderCard = ({ order }: OrderCardProps) => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Способ оплаты</p>
-              <p className="font-medium">
-                {order.payment_method === 'card' ? 'Банковская карта' : 
-                 order.payment_method === 'cash' ? 'Наличные при получении' : order.payment_method}
-              </p>
+              <p className="font-medium">{paymentMethodLabel(order.payment_method)}</p>
             </div>
             {order.tracking_number && (
               <div>

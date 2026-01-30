@@ -42,11 +42,19 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        // Clear auth state
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+        });
+        // Clear other stores that depend on auth
+        import('@/store/cartApiStore').then(({ useCartApiStore }) => {
+          useCartApiStore.getState().clearLocalState();
+        });
+        import('@/store/wishlistStore').then(({ useWishlistStore }) => {
+          useWishlistStore.getState().clearLocalState();
         });
       },
     }),

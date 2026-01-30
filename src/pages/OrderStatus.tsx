@@ -215,19 +215,19 @@ const OrderStatus = () => {
                 {/* Items */}
                 <div className="space-y-3">
                   <h3 className="font-medium">Товары:</h3>
-                  {orderDetail.items.map((item, idx) => (
-                    <div key={idx} className="flex gap-3 items-center">
+                  {orderDetail.items.map((item) => (
+                    <div key={item.id} className="flex gap-3 items-center">
                       <img
-                        src={item.productImage}
-                        alt={item.productName}
+                        src={item.product_image}
+                        alt={item.product_name}
                         className="w-12 h-12 rounded object-cover bg-muted"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium line-clamp-1">{item.productName}</p>
+                        <p className="text-sm font-medium line-clamp-1">{item.product_name}</p>
                         <p className="text-xs text-muted-foreground">{item.quantity} шт.</p>
                       </div>
                       <p className="text-sm font-medium">
-                        {item.subtotal.toLocaleString('ru-RU')} ₽
+                        {item.line_total.toLocaleString('ru-RU')} ₽
                       </p>
                     </div>
                   ))}

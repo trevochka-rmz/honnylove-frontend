@@ -173,6 +173,14 @@ export const Footer = () => {
                   Контакты
                 </button>
               </li>
+              <li>
+                <button 
+                  onClick={() => handleLinkClick('/privacy')} 
+                  className="text-muted-foreground hover:text-primary transition-colors text-left"
+                >
+                  Политика конфиденциальности
+                </button>
+              </li>
             </ul>
           </div>
 
