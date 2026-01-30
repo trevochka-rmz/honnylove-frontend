@@ -37,16 +37,17 @@ export const useProfile = () => {
   return useQuery({
     queryKey: ['profile', accessToken],
     queryFn: async (): Promise<ProfileData> => {
+      if (!accessToken) throw new Error('No access token');
+      
       const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch profile');
       return response.json();
     },
-    enabled: !!accessToken && accessToken !== 'cookie-auth',
+    enabled: !!accessToken,
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
@@ -67,7 +68,6 @@ export const useUpdateProfile = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('Failed to update profile');
