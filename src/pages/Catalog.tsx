@@ -92,9 +92,13 @@ const Catalog = () => {
       setSelectedCategoryId(parseInt(categoryIdParam));
       needsUpdate = true;
     }
-    if (brandIdParam && !selectedBrandIds.includes(parseInt(brandIdParam))) {
-      setSelectedBrandIds([parseInt(brandIdParam)]);
-      needsUpdate = true;
+    // Support comma-separated brand IDs in URL
+    if (brandIdParam) {
+      const brandIds = brandIdParam.split(',').map(id => parseInt(id)).filter(id => !isNaN(id));
+      if (brandIds.length > 0 && JSON.stringify(brandIds) !== JSON.stringify(selectedBrandIds)) {
+        setSelectedBrandIds(brandIds);
+        needsUpdate = true;
+      }
     }
     if (searchQueryParam && searchQueryParam !== searchQuery) {
       setSearchQuery(searchQueryParam);
@@ -130,8 +134,9 @@ const Catalog = () => {
   if (selectedCategoryId) {
     apiParams.categoryId = selectedCategoryId;
   }
-  if (selectedBrandIds.length === 1) {
-    apiParams.brandId = selectedBrandIds[0];
+  // Support multiple brand IDs as comma-separated string
+  if (selectedBrandIds.length > 0) {
+    apiParams.brandIds = selectedBrandIds.join(',');
   }
   if (newParam === 'true') {
     apiParams.isNew = true;
@@ -286,7 +291,7 @@ const Catalog = () => {
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedCategoryId) params.set('categoryId', selectedCategoryId.toString());
-    if (selectedBrandIds.length === 1) params.set('brandId', selectedBrandIds[0].toString());
+    if (selectedBrandIds.length > 0) params.set('brandId', selectedBrandIds.join(','));
     if (currentPage > 1) params.set('page', currentPage.toString());
     if (searchQuery) params.set('search', searchQuery);
     if (newParam === 'true') params.set('new', 'true');

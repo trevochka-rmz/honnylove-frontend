@@ -14,10 +14,27 @@ interface WishlistState {
   isFavorite: (productId: string) => boolean;
 }
 
+// Helper to decode JWT and check expiration
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Add 30 second buffer before expiration
+    return payload.exp * 1000 < Date.now() + 30000;
+  } catch {
+    return true;
+  }
+};
+
 const getToken = async (): Promise<string | null> => {
   const { accessToken, refreshToken, setAuth, user, logout } = useAuthStore.getState();
   if (!accessToken || !refreshToken) return null;
 
+  // If token is still valid, return it without refreshing
+  if (!isTokenExpired(accessToken)) {
+    return accessToken;
+  }
+
+  // Token is expired, try to refresh
   try {
     const { accessToken: newToken } = await api.refreshToken(refreshToken);
     if (user) {
