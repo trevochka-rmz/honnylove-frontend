@@ -304,8 +304,8 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'Неверный email или пароль');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || 'Неверный email или пароль');
     }
     return response.json();
   },
@@ -318,8 +318,8 @@ export const api = {
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'Ошибка регистрации');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || 'Ошибка регистрации');
     }
     return response.json();
   },

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,15 @@ const Checkout = () => {
 
   const [saveAddress, setSaveAddress] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasFetched = useRef(false);
   
   // Get selected item IDs from sessionStorage
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // Scroll to top once on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('checkoutItems');
@@ -60,13 +66,15 @@ const Checkout = () => {
     }
   }, []);
 
+  // Handle auth redirect and fetch cart - only once
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
-    } else {
+    } else if (!hasFetched.current) {
+      hasFetched.current = true;
       fetchCart();
     }
-  }, [isAuthenticated, navigate, fetchCart]);
+  }, [isAuthenticated, navigate]);
 
   // Pre-fill form with profile data
   useEffect(() => {

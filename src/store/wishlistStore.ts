@@ -10,6 +10,7 @@ interface WishlistState {
   addToWishlist: (productId: number) => Promise<boolean>;
   removeFromWishlist: (productId: number) => Promise<boolean>;
   clearWishlist: () => Promise<void>;
+  clearLocalState: () => void;
   isFavorite: (productId: string) => boolean;
 }
 
@@ -33,6 +34,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
   items: [],
   isLoading: false,
   error: null,
+
+  // Clear local state without API call (for logout)
+  clearLocalState: () => {
+    set({ items: [], error: null });
+  },
 
   fetchWishlist: async () => {
     const token = await getToken();

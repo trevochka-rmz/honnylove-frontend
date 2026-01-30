@@ -35,7 +35,7 @@ export const useProfile = () => {
   const accessToken = useAuthStore((state) => state.accessToken);
   
   return useQuery({
-    queryKey: ['profile'],
+    queryKey: ['profile', accessToken],
     queryFn: async (): Promise<ProfileData> => {
       const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
@@ -46,7 +46,7 @@ export const useProfile = () => {
       if (!response.ok) throw new Error('Failed to fetch profile');
       return response.json();
     },
-    enabled: !!accessToken,
+    enabled: !!accessToken && accessToken !== 'cookie-auth',
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
@@ -74,7 +74,7 @@ export const useUpdateProfile = () => {
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', accessToken] });
       // Update auth store with new user data
       if (user && accessToken && refreshToken) {
         updateUser({

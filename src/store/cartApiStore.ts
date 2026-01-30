@@ -12,6 +12,7 @@ interface CartApiState {
   updateQuantity: (cartItemId: number, quantity: number) => Promise<boolean>;
   removeFromCart: (cartItemId: number) => Promise<boolean>;
   clearCart: () => Promise<void>;
+  clearLocalState: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
 }
@@ -37,6 +38,11 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
   summary: null,
   isLoading: false,
   error: null,
+
+  // Clear local state without API call (for logout)
+  clearLocalState: () => {
+    set({ items: [], summary: null, error: null });
+  },
 
   fetchCart: async () => {
     const token = await getToken();
