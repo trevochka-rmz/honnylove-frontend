@@ -20,7 +20,7 @@ const AuthCallback = () => {
         return;
       }
 
-      // Check if tokens are in URL params
+      // Check if tokens are in URL params (backend may send them this way)
       const accessToken = searchParams.get('accessToken') || searchParams.get('access_token');
       const refreshToken = searchParams.get('refreshToken') || searchParams.get('refresh_token');
 
@@ -31,6 +31,7 @@ const AuthCallback = () => {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
+            credentials: 'include',
           });
 
           if (response.ok) {
@@ -45,7 +46,7 @@ const AuthCallback = () => {
           setTimeout(() => navigate('/auth'), 3000);
         }
       } else {
-        // No tokens in URL - try to fetch from cookies using /api/auth/me endpoint
+        // No tokens in URL - try to fetch user info using cookies
         try {
           const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
             credentials: 'include',
@@ -57,15 +58,25 @@ const AuthCallback = () => {
               setAuth(data.user, data.accessToken, data.refreshToken);
               navigate('/profile');
             } else if (data.user) {
-              // Cookies-only mode - need to handle differently
-              // Store user data, tokens will be sent via cookies
+              // Cookies-only mode - store user data with placeholder tokens
               setAuth(data.user, 'cookie-auth', 'cookie-auth');
               navigate('/profile');
             } else {
               throw new Error('No user data received');
             }
           } else {
-            throw new Error('Failed to authenticate');
+            // If /api/auth/me fails, try to get profile directly (cookies might already be set)
+            const profileResponse = await fetch(`${API_BASE_URL}/api/users/profile`, {
+              credentials: 'include',
+            });
+            
+            if (profileResponse.ok) {
+              const user = await profileResponse.json();
+              setAuth(user, 'cookie-auth', 'cookie-auth');
+              navigate('/profile');
+            } else {
+              throw new Error('Failed to authenticate');
+            }
           }
         } catch (err) {
           setError('Ошибка авторизации. Попробуйте снова.');
