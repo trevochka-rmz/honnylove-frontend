@@ -242,7 +242,13 @@ export const Header = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
-                    onClick={logout}
+                    onClick={async () => {
+                      try {
+                        const { api } = await import('@/services/api');
+                        await api.logout();
+                      } catch {}
+                      logout();
+                    }}
                     className="cursor-pointer text-destructive focus:text-destructive"
                   >
                     <LogOut className="mr-2 h-4 w-4" />

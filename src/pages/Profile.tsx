@@ -50,7 +50,12 @@ const Profile = () => {
     }
   }, [profile, addressPromptShown]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Call server logout to clear HttpOnly cookies
+    try {
+      const { api } = await import('@/services/api');
+      await api.logout();
+    } catch {}
     // Clear cart state before logout
     resetCartState({ items: [], summary: null });
     logout();

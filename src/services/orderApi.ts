@@ -106,29 +106,32 @@ export interface PaymentStatusResponse {
   };
 }
 
+// Helper for all fetch calls with credentials
+const fetchWithCreds = (url: string, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...options.headers,
+    },
+  });
+};
+
 export const orderApi = {
-  // Get selected items details for checkout
-  async getSelectedItems(token: string, selectedItems: number[]): Promise<SelectedItemsResponse> {
-    const response = await fetch(`${API_URL}/cart/selected`, {
+  async getSelectedItems(selectedItems: number[]): Promise<SelectedItemsResponse> {
+    const response = await fetchWithCreds(`${API_URL}/cart/selected`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ selected_items: selectedItems }),
     });
     if (!response.ok) throw new Error('Failed to fetch selected items');
     return response.json();
   },
 
-  // Checkout with cash payment
-  async checkoutCash(token: string, data: CheckoutRequest): Promise<OrderResponse> {
-    const response = await fetch(`${API_URL}/orders/checkout`, {
+  async checkoutCash(data: CheckoutRequest): Promise<OrderResponse> {
+    const response = await fetchWithCreds(`${API_URL}/orders/checkout`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -138,14 +141,10 @@ export const orderApi = {
     return response.json();
   },
 
-  // Checkout with card/sbp payment (YooKassa)
-  async checkoutWithPayment(token: string, data: CheckoutRequest): Promise<PaymentOrderResponse> {
-    const response = await fetch(`${API_URL}/orders/checkout-with-payment`, {
+  async checkoutWithPayment(data: CheckoutRequest): Promise<PaymentOrderResponse> {
+    const response = await fetchWithCreds(`${API_URL}/orders/checkout-with-payment`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -155,13 +154,8 @@ export const orderApi = {
     return response.json();
   },
 
-  // Get payment status for an order
-  async getPaymentStatus(token: string, orderId: number): Promise<PaymentStatusResponse> {
-    const response = await fetch(`${API_URL}/payments/order/${orderId}/status`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  async getPaymentStatus(orderId: number): Promise<PaymentStatusResponse> {
+    const response = await fetchWithCreds(`${API_URL}/payments/order/${orderId}/status`);
     if (!response.ok) throw new Error('Failed to fetch payment status');
     return response.json();
   },

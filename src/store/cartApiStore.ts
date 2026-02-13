@@ -17,57 +17,23 @@ interface CartApiState {
   getTotalPrice: () => number;
 }
 
-// Helper to decode JWT and check expiration
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    // Add 30 second buffer before expiration
-    return payload.exp * 1000 < Date.now() + 30000;
-  } catch {
-    return true;
-  }
-};
-
-const getToken = async (): Promise<string | null> => {
-  const { accessToken, refreshToken, setAuth, user, logout } = useAuthStore.getState();
-  if (!accessToken || !refreshToken) return null;
-
-  // If token is still valid, return it without refreshing
-  if (!isTokenExpired(accessToken)) {
-    return accessToken;
-  }
-
-  // Token is expired, try to refresh
-  try {
-    const { accessToken: newToken } = await api.refreshToken(refreshToken);
-    if (user) {
-      setAuth(user, newToken, refreshToken);
-    }
-    return newToken;
-  } catch {
-    logout();
-    return null;
-  }
-};
-
 export const useCartApiStore = create<CartApiState>((set, get) => ({
   items: [],
   summary: null,
   isLoading: false,
   error: null,
 
-  // Clear local state without API call (for logout)
   clearLocalState: () => {
     set({ items: [], summary: null, error: null });
   },
 
   fetchCart: async () => {
-    const token = await getToken();
-    if (!token) return;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
 
     set({ isLoading: true, error: null });
     try {
-      const data = await api.getCart(token);
+      const data = await api.getCart();
       set({ items: data.items, summary: data.summary, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch cart', isLoading: false });
@@ -75,12 +41,11 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
   },
 
   addToCart: async (productId: number, quantity: number = 1) => {
-    const token = await getToken();
-    if (!token) return false;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return false;
 
     try {
-      await api.addToCart(token, productId, quantity);
-      // Refetch cart to get updated data
+      await api.addToCart(productId, quantity);
       await get().fetchCart();
       return true;
     } catch (error) {
@@ -90,11 +55,11 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
   },
 
   updateQuantity: async (cartItemId: number, quantity: number) => {
-    const token = await getToken();
-    if (!token) return false;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return false;
 
     try {
-      const response = await api.updateCartItem(token, cartItemId, quantity);
+      const response = await api.updateCartItem(cartItemId, quantity);
       set((state) => ({
         items: state.items.map((item) =>
           item.id === cartItemId ? response.item : item
@@ -109,11 +74,11 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
   },
 
   removeFromCart: async (cartItemId: number) => {
-    const token = await getToken();
-    if (!token) return false;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return false;
 
     try {
-      const response = await api.removeFromCart(token, cartItemId);
+      const response = await api.removeFromCart(cartItemId);
       set((state) => ({
         items: state.items.filter((item) => item.id !== cartItemId),
         summary: response.cartSummary,
@@ -126,11 +91,11 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
   },
 
   clearCart: async () => {
-    const token = await getToken();
-    if (!token) return;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
 
     try {
-      await api.clearCart(token);
+      await api.clearCart();
       set({ items: [], summary: null });
     } catch (error) {
       console.error('Failed to clear cart');
