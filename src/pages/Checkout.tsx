@@ -262,28 +262,20 @@ const Checkout = () => {
                     onValueChange={(value) => setDeliveryType(value as 'delivery' | 'pickup')}
                     className="space-y-3"
                   >
-                    <div className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                    <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                       deliveryType === 'delivery' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
                     }`}>
                       <RadioGroupItem value="delivery" id="delivery-type" />
-                      <div className="flex items-center gap-2 flex-1">
-                        <Truck className="h-5 w-5 text-primary" />
-                        <Label htmlFor="delivery-type" className="font-roboto cursor-pointer flex-1">
-                          Доставка
-                        </Label>
-                      </div>
-                    </div>
-                    <div className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      <Truck className="h-5 w-5 text-primary" />
+                      <span className="font-roboto flex-1">Доставка</span>
+                    </label>
+                    <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                       deliveryType === 'pickup' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
                     }`}>
                       <RadioGroupItem value="pickup" id="pickup-type" />
-                      <div className="flex items-center gap-2 flex-1">
-                        <Store className="h-5 w-5 text-primary" />
-                        <Label htmlFor="pickup-type" className="font-roboto cursor-pointer flex-1">
-                          Самовывоз
-                        </Label>
-                      </div>
-                    </div>
+                      <Store className="h-5 w-5 text-primary" />
+                      <span className="font-roboto flex-1">Самовывоз</span>
+                    </label>
                   </RadioGroup>
 
                   {isPickup ? (
@@ -394,33 +386,27 @@ const Checkout = () => {
                     onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
                     className="space-y-3"
                   >
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
+                    <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      formData.paymentMethod === 'sbp' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
+                    }`}>
                       <RadioGroupItem value="sbp" id="sbp" />
-                      <div className="flex items-center gap-2 flex-1">
-                        <Smartphone className="h-5 w-5 text-primary" />
-                        <Label htmlFor="sbp" className="font-roboto cursor-pointer flex-1">
-                          СБП (Система быстрых платежей)
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
+                      <Smartphone className="h-5 w-5 text-primary" />
+                      <span className="font-roboto flex-1">СБП (Система быстрых платежей)</span>
+                    </label>
+                    <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      formData.paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
+                    }`}>
                       <RadioGroupItem value="card" id="card" />
-                      <div className="flex items-center gap-2 flex-1">
-                        <CreditCard className="h-5 w-5 text-primary" />
-                        <Label htmlFor="card" className="font-roboto cursor-pointer flex-1">
-                          Банковская карта
-                        </Label>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:border-primary transition-colors cursor-pointer">
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      <span className="font-roboto flex-1">Банковская карта</span>
+                    </label>
+                    <label className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      formData.paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
+                    }`}>
                       <RadioGroupItem value="cash" id="cash" />
-                      <div className="flex items-center gap-2 flex-1">
-                        <Banknote className="h-5 w-5 text-primary" />
-                        <Label htmlFor="cash" className="font-roboto cursor-pointer flex-1">
-                          Наличными при получении
-                        </Label>
-                      </div>
-                    </div>
+                      <Banknote className="h-5 w-5 text-primary" />
+                      <span className="font-roboto flex-1">Наличными при получении</span>
+                    </label>
                   </RadioGroup>
                 </CardContent>
               </Card>

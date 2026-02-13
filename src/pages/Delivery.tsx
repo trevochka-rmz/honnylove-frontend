@@ -43,13 +43,16 @@ const Delivery = () => {
             <div className="bg-card border border-border rounded-2xl p-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
-                Пункты выдачи
+                Самовывоз
               </h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li>• СДЭК, Boxberry, ПочтаРоссии</li>
-                <li>• Срок хранения: до 7 дней</li>
-                <li>• Стоимость: от 200₽</li>
-                <li>• Удобный выбор ближайшего пункта</li>
+                <li>• <span className="text-primary font-medium">Бесплатно!</span></li>
+                {settings?.address && (
+                  <li className="flex items-start gap-1">
+                    • Адрес: <span className="font-medium text-foreground">{settings.address}</span>
+                  </li>
+                )}
+                <li>• Заберите заказ в удобное для вас время</li>
               </ul>
             </div>
           </div>
