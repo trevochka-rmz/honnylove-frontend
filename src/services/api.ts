@@ -24,7 +24,6 @@ export interface ApiProduct {
   brand_id: number;
   subcategory_id: number;
   isFeatured: boolean;
-  // Category path info
   top_category_name?: string;
   top_category_id?: number;
   top_category_slug?: string;
@@ -56,7 +55,7 @@ export interface ProductsParams {
   categoryId?: number;
   subcategoryId?: number;
   brandId?: number;
-  brandIds?: string; // comma-separated brand IDs e.g. "1,2,3"
+  brandIds?: string;
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -67,7 +66,6 @@ export interface ProductsParams {
   sort?: 'popularity' | 'price_asc' | 'price_desc' | 'rating' | 'new_random' | 'newest' | 'id_desc';
 }
 
-// Category types
 export interface ApiCategory {
   id: number;
   name: string;
@@ -89,7 +87,6 @@ export interface CategoryDetailResponse {
   data: ApiCategory;
 }
 
-// Brand brief type for filters
 export interface BrandBrief {
   id: number;
   slug: string;
@@ -152,13 +149,10 @@ export interface AuthUser {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  refresh_token?: string | null;
 }
 
 export interface AuthResponse {
   user: AuthUser;
-  accessToken: string;
-  refreshToken: string;
 }
 
 export interface RegisterData {
@@ -167,7 +161,6 @@ export interface RegisterData {
   password: string;
 }
 
-// Wishlist types
 export interface WishlistItem {
   id: number;
   user_id: number;
@@ -176,7 +169,6 @@ export interface WishlistItem {
   product: ApiProduct;
 }
 
-// Cart types
 export interface CartItemApi {
   id: number;
   user_id: number;
@@ -215,6 +207,17 @@ export interface CartUpdateResponse {
   };
 }
 
+// Helper for all fetch calls - always include credentials for HttpOnly cookies
+const fetchWithCreds = (url: string, options: RequestInit = {}) => {
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...options.headers,
+    },
+  });
+};
+
 export const api = {
   async getProducts(params: ProductsParams = {}): Promise<ProductsResponse> {
     const searchParams = new URLSearchParams();
@@ -225,7 +228,7 @@ export const api = {
     if (params.categoryId) searchParams.append('categoryId', params.categoryId.toString());
     if (params.subcategoryId) searchParams.append('subcategoryId', params.subcategoryId.toString());
     if (params.brandId) searchParams.append('brandId', params.brandId.toString());
-    if (params.brandIds) searchParams.append('brandId', params.brandIds); // comma-separated string
+    if (params.brandIds) searchParams.append('brandId', params.brandIds);
     if (params.search) searchParams.append('search', params.search);
     if (params.minPrice !== undefined) searchParams.append('minPrice', params.minPrice.toString());
     if (params.maxPrice !== undefined) searchParams.append('maxPrice', params.maxPrice.toString());
@@ -238,19 +241,19 @@ export const api = {
     const queryString = searchParams.toString();
     const url = `${API_BASE_URL}/products${queryString ? `?${queryString}` : ''}`;
     
-    const response = await fetch(url);
+    const response = await fetchWithCreds(url);
     if (!response.ok) throw new Error('Failed to fetch products');
     return response.json();
   },
 
   async getProductById(id: string): Promise<ApiProduct> {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/products/${id}`);
     if (!response.ok) throw new Error('Failed to fetch product');
     return response.json();
   },
 
   async searchProducts(query: string): Promise<ApiProduct[]> {
-    const response = await fetch(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/products/search?q=${encodeURIComponent(query)}`);
     if (!response.ok) throw new Error('Failed to search products');
     return response.json();
   },
@@ -267,39 +270,38 @@ export const api = {
     const queryString = searchParams.toString();
     const url = `${API_BASE_URL}/brands${queryString ? `?${queryString}` : ''}`;
     
-    const response = await fetch(url);
+    const response = await fetchWithCreds(url);
     if (!response.ok) throw new Error('Failed to fetch brands');
     return response.json();
   },
 
   async getBrandById(id: string | number): Promise<ApiBrand> {
-    const response = await fetch(`${API_BASE_URL}/brands/${id}`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/brands/${id}`);
     if (!response.ok) throw new Error('Failed to fetch brand');
     return response.json();
   },
 
-  // Category endpoints
   async getAllCategories(): Promise<CategoriesAllResponse> {
-    const response = await fetch(`${API_BASE_URL}/categories/all`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/categories/all`);
     if (!response.ok) throw new Error('Failed to fetch categories');
     return response.json();
   },
 
   async getCategoryById(id: number): Promise<CategoryDetailResponse> {
-    const response = await fetch(`${API_BASE_URL}/categories/${id}`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/categories/${id}`);
     if (!response.ok) throw new Error('Failed to fetch category');
     return response.json();
   },
 
   async getBrandsBrief(): Promise<BrandsBriefResponse> {
-    const response = await fetch(`${API_BASE_URL}/brands/brief`);
+    const response = await fetchWithCreds(`${API_BASE_URL}/brands/brief`);
     if (!response.ok) throw new Error('Failed to fetch brands brief');
     return response.json();
   },
 
   // Auth endpoints
   async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await fetchWithCreds(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -312,7 +314,7 @@ export const api = {
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await fetchWithCreds(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -324,32 +326,23 @@ export const api = {
     return response.json();
   },
 
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+  async logout(): Promise<void> {
+    await fetchWithCreds(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
     });
-    if (!response.ok) throw new Error('Failed to refresh token');
-    return response.json();
   },
 
-  // Wishlist endpoints
-  async getWishlist(token: string): Promise<WishlistItem[]> {
-    const response = await fetch(`${API_BASE_URL}/wishlist`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  // Wishlist endpoints - cookies sent automatically
+  async getWishlist(): Promise<WishlistItem[]> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/wishlist`);
     if (!response.ok) throw new Error('Failed to fetch wishlist');
     return response.json();
   },
 
-  async addToWishlist(token: string, productId: number): Promise<WishlistItem> {
-    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+  async addToWishlist(productId: number): Promise<WishlistItem> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/wishlist`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ product_id: productId }),
     });
     if (!response.ok) {
@@ -359,38 +352,31 @@ export const api = {
     return response.json();
   },
 
-  async removeFromWishlist(token: string, productId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/wishlist/${productId}`, {
+  async removeFromWishlist(productId: number): Promise<void> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/wishlist/${productId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to remove from wishlist');
   },
 
-  async clearWishlist(token: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/wishlist`, {
+  async clearWishlist(): Promise<void> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/wishlist`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to clear wishlist');
   },
 
-  // Cart endpoints
-  async getCart(token: string): Promise<CartResponse> {
-    const response = await fetch(`${API_BASE_URL}/cart`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  // Cart endpoints - cookies sent automatically
+  async getCart(): Promise<CartResponse> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/cart`);
     if (!response.ok) throw new Error('Failed to fetch cart');
     return response.json();
   },
 
-  async addToCart(token: string, productId: number, quantity: number = 1): Promise<CartItemApi> {
-    const response = await fetch(`${API_BASE_URL}/cart`, {
+  async addToCart(productId: number, quantity: number = 1): Promise<CartItemApi> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/cart`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ product_id: productId, quantity }),
     });
     if (!response.ok) {
@@ -400,32 +386,27 @@ export const api = {
     return response.json();
   },
 
-  async updateCartItem(token: string, cartItemId: number, quantity: number): Promise<CartUpdateResponse> {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
+  async updateCartItem(cartItemId: number, quantity: number): Promise<CartUpdateResponse> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/cart/${cartItemId}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quantity }),
     });
     if (!response.ok) throw new Error('Failed to update cart item');
     return response.json();
   },
 
-  async removeFromCart(token: string, cartItemId: number): Promise<{ message: string; cartSummary: any }> {
-    const response = await fetch(`${API_BASE_URL}/cart/${cartItemId}`, {
+  async removeFromCart(cartItemId: number): Promise<{ message: string; cartSummary: any }> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/cart/${cartItemId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to remove from cart');
     return response.json();
   },
 
-  async clearCart(token: string): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/cart`, {
+  async clearCart(): Promise<{ message: string }> {
+    const response = await fetchWithCreds(`${API_BASE_URL}/cart`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error('Failed to clear cart');
     return response.json();

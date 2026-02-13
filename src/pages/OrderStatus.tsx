@@ -5,7 +5,6 @@ import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
-import { useAuth } from '@/hooks/useAuth';
 import { orderApi, PaymentStatusResponse } from '@/services/orderApi';
 import { useOrderDetail, getOrderStatusInfo } from '@/hooks/useOrders';
 import { 
@@ -24,7 +23,6 @@ const OrderStatus = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { getValidToken } = useAuth();
   
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,13 +46,7 @@ const OrderStatus = () => {
     if (!orderIdNum) return;
     
     try {
-      const token = await getValidToken();
-      if (!token) {
-        navigate('/auth');
-        return;
-      }
-      
-      const status = await orderApi.getPaymentStatus(token, orderIdNum);
+      const status = await orderApi.getPaymentStatus(orderIdNum);
       setPaymentStatus(status);
     } catch (error) {
       console.error('Failed to fetch payment status:', error);
@@ -64,8 +56,10 @@ const OrderStatus = () => {
   };
 
   useEffect(() => {
-    fetchPaymentStatus();
-  }, [orderIdNum]);
+    if (isAuthenticated) {
+      fetchPaymentStatus();
+    }
+  }, [orderIdNum, isAuthenticated]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -139,7 +133,6 @@ const OrderStatus = () => {
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Payment Status Card */}
           <Card>
             <CardContent className="p-8">
               <div className={`rounded-2xl ${statusUI.bgColor} p-6 text-center space-y-4`}>
@@ -190,7 +183,6 @@ const OrderStatus = () => {
             </CardContent>
           </Card>
 
-          {/* Order Details */}
           {orderDetail && (
             <Card>
               <CardHeader>
@@ -200,7 +192,6 @@ const OrderStatus = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Order Status */}
                 {orderStatusInfo && (
                   <div className={`rounded-lg p-3 ${orderStatusInfo.bgColor}`}>
                     <div className="flex items-center gap-2">
@@ -212,7 +203,6 @@ const OrderStatus = () => {
                   </div>
                 )}
 
-                {/* Items */}
                 <div className="space-y-3">
                   <h3 className="font-medium">Товары:</h3>
                   {orderDetail.items.map((item) => (
@@ -233,7 +223,6 @@ const OrderStatus = () => {
                   ))}
                 </div>
 
-                {/* Summary */}
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Доставка:</span>
@@ -247,7 +236,6 @@ const OrderStatus = () => {
                   </div>
                 </div>
 
-                {/* Delivery Address */}
                 <div className="border-t pt-4">
                   <div className="flex items-start gap-2">
                     <Truck className="w-4 h-4 mt-0.5 text-muted-foreground" />
@@ -261,7 +249,6 @@ const OrderStatus = () => {
             </Card>
           )}
 
-          {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => navigate('/profile')}

@@ -25,7 +25,9 @@ export interface SiteSettings {
 }
 
 const fetchSettings = async (): Promise<SiteSettings> => {
-  const response = await fetch(`${API_BASE_URL}/api/settings`);
+  const response = await fetch(`${API_BASE_URL}/api/settings`, {
+    credentials: 'include',
+  });
   if (!response.ok) {
     throw new Error('Failed to fetch settings');
   }
@@ -36,7 +38,7 @@ export const useSettings = () => {
   return useQuery({
     queryKey: ['settings'],
     queryFn: fetchSettings,
-    staleTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 30,
     retry: 2,
   });
 };

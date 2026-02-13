@@ -53,45 +53,37 @@ interface OrderDetailResponse {
 const API_URL = `${API_BASE_URL}/api`;
 
 export const useOrders = () => {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   return useQuery({
-    queryKey: ['orders', accessToken],
+    queryKey: ['orders'],
     queryFn: async (): Promise<Order[]> => {
-      if (!accessToken) throw new Error('No access token');
-      
       const response = await fetch(`${API_URL}/orders`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data: OrdersResponse = await response.json();
       return data.orders || [];
     },
-    enabled: !!accessToken,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
   });
 };
 
 export const useOrderDetail = (orderId: number | null) => {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   return useQuery({
     queryKey: ['order', orderId],
     queryFn: async (): Promise<Order> => {
-      if (!accessToken) throw new Error('No access token');
-      
       const response = await fetch(`${API_URL}/orders/${orderId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch order details');
       const data: OrderDetailResponse = await response.json();
       return data.order;
     },
-    enabled: !!accessToken && !!orderId,
+    enabled: isAuthenticated && !!orderId,
     staleTime: 2 * 60 * 1000,
   });
 };

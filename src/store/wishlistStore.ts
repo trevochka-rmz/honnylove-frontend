@@ -14,56 +14,22 @@ interface WishlistState {
   isFavorite: (productId: string) => boolean;
 }
 
-// Helper to decode JWT and check expiration
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    // Add 30 second buffer before expiration
-    return payload.exp * 1000 < Date.now() + 30000;
-  } catch {
-    return true;
-  }
-};
-
-const getToken = async (): Promise<string | null> => {
-  const { accessToken, refreshToken, setAuth, user, logout } = useAuthStore.getState();
-  if (!accessToken || !refreshToken) return null;
-
-  // If token is still valid, return it without refreshing
-  if (!isTokenExpired(accessToken)) {
-    return accessToken;
-  }
-
-  // Token is expired, try to refresh
-  try {
-    const { accessToken: newToken } = await api.refreshToken(refreshToken);
-    if (user) {
-      setAuth(user, newToken, refreshToken);
-    }
-    return newToken;
-  } catch {
-    logout();
-    return null;
-  }
-};
-
 export const useWishlistStore = create<WishlistState>((set, get) => ({
   items: [],
   isLoading: false,
   error: null,
 
-  // Clear local state without API call (for logout)
   clearLocalState: () => {
     set({ items: [], error: null });
   },
 
   fetchWishlist: async () => {
-    const token = await getToken();
-    if (!token) return;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
 
     set({ isLoading: true, error: null });
     try {
-      const items = await api.getWishlist(token);
+      const items = await api.getWishlist();
       set({ items, isLoading: false });
     } catch (error) {
       set({ error: 'Failed to fetch wishlist', isLoading: false });
@@ -71,11 +37,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
   },
 
   addToWishlist: async (productId: number) => {
-    const token = await getToken();
-    if (!token) return false;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return false;
 
     try {
-      const newItem = await api.addToWishlist(token, productId);
+      const newItem = await api.addToWishlist(productId);
       set((state) => ({ items: [...state.items, newItem] }));
       return true;
     } catch (error: any) {
@@ -87,11 +53,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
   },
 
   removeFromWishlist: async (productId: number) => {
-    const token = await getToken();
-    if (!token) return false;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return false;
 
     try {
-      await api.removeFromWishlist(token, productId);
+      await api.removeFromWishlist(productId);
       set((state) => ({
         items: state.items.filter((item) => item.product_id !== productId),
       }));
@@ -102,11 +68,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
   },
 
   clearWishlist: async () => {
-    const token = await getToken();
-    if (!token) return;
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) return;
 
     try {
-      await api.clearWishlist(token);
+      await api.clearWishlist();
       set({ items: [] });
     } catch (error) {
       console.error('Failed to clear wishlist');

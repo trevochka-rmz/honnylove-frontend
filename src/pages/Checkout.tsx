@@ -16,22 +16,23 @@ import {
 } from '@/components/ui/select';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
-import { useAuth } from '@/hooks/useAuth';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useSettings } from '@/hooks/useSettings';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck } from 'lucide-react';
+import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck, Store } from 'lucide-react';
 import { russianCities } from '@/data/cities';
 import { orderApi } from '@/services/orderApi';
 
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { getValidToken } = useAuth();
   const { data: profile } = useProfile();
+  const { data: settings } = useSettings();
   const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
 
+  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,10 +48,8 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const hasFetched = useRef(false);
   
-  // Get selected item IDs from sessionStorage
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  // Scroll to top once on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -60,13 +59,10 @@ const Checkout = () => {
     if (stored) {
       try {
         setSelectedIds(JSON.parse(stored));
-      } catch {
-        // If parsing fails, use all items
-      }
+      } catch {}
     }
   }, []);
 
-  // Handle auth redirect and fetch cart - only once
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth');
@@ -76,7 +72,6 @@ const Checkout = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Pre-fill form with profile data
   useEffect(() => {
     if (profile) {
       const addressParts = profile.address?.split(',') || [];
@@ -94,31 +89,33 @@ const Checkout = () => {
     }
   }, [profile]);
 
-  // Filter only selected in-stock items
   const availableItems = useMemo(() => {
     const inStockItems = items.filter(item => item.inStock && !item.outOfStock);
-    
-    // If we have selected IDs, filter by them
     if (selectedIds.length > 0) {
       return inStockItems.filter(item => selectedIds.includes(item.id));
     }
-    
-    // Otherwise return all in-stock items
     return inStockItems;
   }, [items, selectedIds]);
 
   const totalPrice = availableItems.reduce((sum, item) => sum + item.subtotal, 0);
   
-  // Delivery logic: Free for Kyzyl, free if >= 3000, otherwise 300₽
+  const isPickup = deliveryType === 'pickup';
   const isKyzyl = formData.city === 'Кызыл';
-  const deliveryFee = isKyzyl ? 0 : (totalPrice >= 3000 ? 0 : 300);
+  const deliveryFee = isPickup ? 0 : (isKyzyl ? 0 : (totalPrice >= 3000 ? 0 : 300));
   const finalTotal = totalPrice + deliveryFee;
+
+  const storeAddress = settings?.address || 'г. Кызыл, ул. Кочетова, д. 1';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone || !formData.street || !formData.city) {
+    if (!formData.name || !formData.phone) {
       toast.error('Пожалуйста, заполните все обязательные поля');
+      return;
+    }
+
+    if (!isPickup && (!formData.street || !formData.city)) {
+      toast.error('Пожалуйста, укажите адрес доставки');
       return;
     }
 
@@ -130,24 +127,18 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      const token = await getValidToken();
-      if (!token) {
-        toast.error('Необходима авторизация');
-        navigate('/auth');
-        return;
-      }
-
-      // Save address to profile if checkbox is checked
-      if (saveAddress && formData.city && formData.street) {
+      // Save address to profile if delivery and checkbox is checked
+      if (!isPickup && saveAddress && formData.city && formData.street) {
         const fullAddress = `${formData.city}, ${formData.street}`;
         try {
           await updateProfile.mutateAsync({ address: fullAddress });
-        } catch (error) {
-          // Silent fail - order will still go through
-        }
+        } catch (error) {}
       }
 
-      const shippingAddress = `${formData.city}, ${formData.street}${formData.zipCode ? `, ${formData.zipCode}` : ''}`;
+      const shippingAddress = isPickup 
+        ? `Самовывоз: ${storeAddress}`
+        : `${formData.city}, ${formData.street}${formData.zipCode ? `, ${formData.zipCode}` : ''}`;
+      
       const selectedItemIds = availableItems.map(item => item.id);
 
       const checkoutData = {
@@ -161,21 +152,14 @@ const Checkout = () => {
       };
 
       if (formData.paymentMethod === 'cash') {
-        // Cash payment - simple checkout
-        const response = await orderApi.checkoutCash(token, checkoutData);
-        
+        const response = await orderApi.checkoutCash(checkoutData);
         sessionStorage.removeItem('checkoutItems');
         await clearCart();
-        
         navigate(`/order-success?order_id=${response.data.order.id}&order_number=${response.data.order_number}`);
       } else {
-        // Card or SBP - checkout with payment
-        const response = await orderApi.checkoutWithPayment(token, checkoutData);
-        
+        const response = await orderApi.checkoutWithPayment(checkoutData);
         sessionStorage.removeItem('checkoutItems');
         await clearCart();
-        
-        // Redirect to YooKassa payment page
         if (response.data.payment?.confirmation_url) {
           window.location.href = response.data.payment.confirmation_url;
         } else {
@@ -219,7 +203,6 @@ const Checkout = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
             <div className="lg:col-span-2 space-y-6">
               {/* Contact Info */}
               <Card>
@@ -240,9 +223,7 @@ const Checkout = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email" className="font-roboto">
-                      Email
-                    </Label>
+                    <Label htmlFor="email" className="font-roboto">Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -267,91 +248,130 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* Delivery Address */}
+              {/* Delivery Type */}
               <Card>
                 <CardHeader>
                   <CardTitle className="font-playfair flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    Адрес доставки
+                    Способ получения
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="city" className="font-roboto">
-                      Город <span className="text-destructive">*</span>
-                    </Label>
-                    <Select
-                      value={formData.city}
-                      onValueChange={(value) => setFormData({ ...formData, city: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выберите город" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {russianCities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {/* Delivery info hint */}
-                  {formData.city && (
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 text-sm">
-                      <Truck className="h-4 w-4 text-primary flex-shrink-0" />
-                      {isKyzyl ? (
-                        <span className="text-primary font-medium">Бесплатная доставка по г. Кызыл</span>
-                      ) : totalPrice >= 3000 ? (
-                        <span className="text-primary font-medium">Бесплатная доставка при заказе от 3000₽</span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          Доставка: 300₽ (бесплатно при заказе от 3000₽)
-                        </span>
-                      )}
+                  <RadioGroup
+                    value={deliveryType}
+                    onValueChange={(value) => setDeliveryType(value as 'delivery' | 'pickup')}
+                    className="space-y-3"
+                  >
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      deliveryType === 'delivery' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
+                    }`}>
+                      <RadioGroupItem value="delivery" id="delivery-type" />
+                      <div className="flex items-center gap-2 flex-1">
+                        <Truck className="h-5 w-5 text-primary" />
+                        <Label htmlFor="delivery-type" className="font-roboto cursor-pointer flex-1">
+                          Доставка
+                        </Label>
+                      </div>
                     </div>
+                    <div className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                      deliveryType === 'pickup' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary'
+                    }`}>
+                      <RadioGroupItem value="pickup" id="pickup-type" />
+                      <div className="flex items-center gap-2 flex-1">
+                        <Store className="h-5 w-5 text-primary" />
+                        <Label htmlFor="pickup-type" className="font-roboto cursor-pointer flex-1">
+                          Самовывоз
+                        </Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+
+                  {isPickup ? (
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-start gap-3">
+                        <Store className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-sm">Адрес магазина</p>
+                          <p className="text-sm text-muted-foreground mt-1">{storeAddress}</p>
+                          <p className="text-xs text-primary mt-2 font-medium">Бесплатно</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <Label htmlFor="city" className="font-roboto">
+                          Город <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                          value={formData.city}
+                          onValueChange={(value) => setFormData({ ...formData, city: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите город" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-60">
+                            {russianCities.map((city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {formData.city && (
+                        <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/50 text-sm">
+                          <Truck className="h-4 w-4 text-primary flex-shrink-0" />
+                          {isKyzyl ? (
+                            <span className="text-primary font-medium">Бесплатная доставка по г. Кызыл</span>
+                          ) : totalPrice >= 3000 ? (
+                            <span className="text-primary font-medium">Бесплатная доставка при заказе от 3000₽</span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Доставка: 300₽ (бесплатно при заказе от 3000₽)
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div>
+                        <Label htmlFor="street" className="font-roboto">
+                          Улица, дом, квартира <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="street"
+                          required
+                          placeholder="ул. Примерная, д. 1, кв. 1"
+                          value={formData.street}
+                          onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                          className="font-roboto"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="zipCode" className="font-roboto">Индекс</Label>
+                        <Input
+                          id="zipCode"
+                          value={formData.zipCode}
+                          onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                          className="font-roboto"
+                        />
+                      </div>
+                      
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={saveAddress}
+                          onChange={(e) => setSaveAddress(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-sm text-muted-foreground">Сохранить адрес в профиле</span>
+                      </label>
+                    </>
                   )}
                   
                   <div>
-                    <Label htmlFor="street" className="font-roboto">
-                      Улица, дом, квартира <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="street"
-                      required
-                      placeholder="ул. Примерная, д. 1, кв. 1"
-                      value={formData.street}
-                      onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                      className="font-roboto"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zipCode" className="font-roboto">
-                      Индекс
-                    </Label>
-                    <Input
-                      id="zipCode"
-                      value={formData.zipCode}
-                      onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                      className="font-roboto"
-                    />
-                  </div>
-                  
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={saveAddress}
-                      onChange={(e) => setSaveAddress(e.target.checked)}
-                      className="rounded border-border"
-                    />
-                    <span className="text-sm text-muted-foreground">Сохранить адрес в профиле</span>
-                  </label>
-                  
-                  <div>
-                    <Label htmlFor="comment" className="font-roboto">
-                      Комментарий к заказу
-                    </Label>
+                    <Label htmlFor="comment" className="font-roboto">Комментарий к заказу</Label>
                     <Textarea
                       id="comment"
                       value={formData.comment}
@@ -413,7 +433,6 @@ const Checkout = () => {
                   <CardTitle className="font-playfair">Ваш заказ</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Items */}
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {availableItems.map((item) => (
                       <div key={item.id} className="flex gap-3">
@@ -443,12 +462,14 @@ const Checkout = () => {
                       <span>{totalPrice.toLocaleString('ru-RU')} ₽</span>
                     </div>
                     <div className="flex justify-between text-sm font-roboto">
-                      <span className="text-muted-foreground">Доставка:</span>
+                      <span className="text-muted-foreground">
+                        {isPickup ? 'Самовывоз:' : 'Доставка:'}
+                      </span>
                       <span className={deliveryFee === 0 ? 'text-primary font-medium' : ''}>
                         {deliveryFee === 0 ? 'Бесплатно' : `${deliveryFee} ₽`}
                       </span>
                     </div>
-                    {isKyzyl && deliveryFee === 0 && (
+                    {!isPickup && isKyzyl && deliveryFee === 0 && (
                       <p className="text-xs text-primary">* Бесплатная доставка по г. Кызыл</p>
                     )}
                   </div>

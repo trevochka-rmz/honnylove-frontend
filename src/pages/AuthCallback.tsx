@@ -12,7 +12,6 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Check if there's an error in the URL
       const errorParam = searchParams.get('error');
       if (errorParam) {
         setError(errorParam);
@@ -20,63 +19,22 @@ const AuthCallback = () => {
         return;
       }
 
-      // Check if tokens are in URL params (backend may send them this way)
-      const accessToken = searchParams.get('accessToken') || searchParams.get('access_token');
-      const refreshToken = searchParams.get('refreshToken') || searchParams.get('refresh_token');
+      // Backend has set HttpOnly cookies, just fetch user profile
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+          credentials: 'include',
+        });
 
-      if (accessToken && refreshToken) {
-        // Tokens in URL - fetch user data and store
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-
-          if (response.ok) {
-            const user = await response.json();
-            setAuth(user, accessToken, refreshToken);
-            navigate('/profile');
-          } else {
-            throw new Error('Failed to fetch user profile');
-          }
-        } catch (err) {
-          setError('Ошибка авторизации. Попробуйте снова.');
-          setTimeout(() => navigate('/auth'), 3000);
+        if (response.ok) {
+          const user = await response.json();
+          setAuth(user);
+          navigate('/profile');
+        } else {
+          throw new Error('Failed to fetch user profile');
         }
-      } else {
-        // No tokens in URL - try to fetch user info using cookies
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/me`);
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user && data.accessToken && data.refreshToken) {
-              setAuth(data.user, data.accessToken, data.refreshToken);
-              navigate('/profile');
-            } else if (data.user) {
-              // Cookies-only mode - store user data with placeholder tokens
-              setAuth(data.user, 'cookie-auth', 'cookie-auth');
-              navigate('/profile');
-            } else {
-              throw new Error('No user data received');
-            }
-          } else {
-            // If /api/auth/me fails, try to get profile directly (cookies might already be set)
-            const profileResponse = await fetch(`${API_BASE_URL}/api/users/profile`);
-            
-            if (profileResponse.ok) {
-              const user = await profileResponse.json();
-              setAuth(user, 'cookie-auth', 'cookie-auth');
-              navigate('/profile');
-            } else {
-              throw new Error('Failed to authenticate');
-            }
-          }
-        } catch (err) {
-          setError('Ошибка авторизации. Попробуйте снова.');
-          setTimeout(() => navigate('/auth'), 3000);
-        }
+      } catch (err) {
+        setError('Ошибка авторизации. Попробуйте снова.');
+        setTimeout(() => navigate('/auth'), 3000);
       }
     };
 

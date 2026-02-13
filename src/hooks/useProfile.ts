@@ -32,58 +32,49 @@ export interface UpdateProfileData {
 const API_URL = `${API_BASE_URL}/api`;
 
 export const useProfile = () => {
-  const accessToken = useAuthStore((state) => state.accessToken);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   return useQuery({
-    queryKey: ['profile', accessToken],
+    queryKey: ['profile'],
     queryFn: async (): Promise<ProfileData> => {
-      if (!accessToken) throw new Error('No access token');
-      
       const response = await fetch(`${API_URL}/users/profile`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
       });
       if (!response.ok) throw new Error('Failed to fetch profile');
       return response.json();
     },
-    enabled: !!accessToken,
+    enabled: isAuthenticated,
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
 };
 
 export const useUpdateProfile = () => {
-  const accessToken = useAuthStore((state) => state.accessToken);
   const queryClient = useQueryClient();
-  const updateUser = useAuthStore((state) => state.setAuth);
+  const setAuth = useAuthStore((state) => state.setAuth);
   const user = useAuthStore((state) => state.user);
-  const refreshToken = useAuthStore((state) => state.refreshToken);
   
   return useMutation({
     mutationFn: async (data: UpdateProfileData): Promise<ProfileData> => {
       const response = await fetch(`${API_URL}/users/profile`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('Failed to update profile');
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['profile', accessToken] });
-      // Update auth store with new user data
-      if (user && accessToken && refreshToken) {
-        updateUser({
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (user) {
+        setAuth({
           ...user,
           first_name: data.first_name,
           last_name: data.last_name,
           phone: data.phone,
           address: data.address,
-        }, accessToken, refreshToken);
+        });
       }
     },
   });
