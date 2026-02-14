@@ -207,15 +207,35 @@ export interface CartUpdateResponse {
   };
 }
 
+// Global 401 handler - auto logout on expired session
+const handle401 = () => {
+  const { useAuthStore } = require('@/store/authStore');
+  const state = useAuthStore.getState();
+  if (state.isAuthenticated) {
+    state.logout();
+    window.location.href = '/auth';
+  }
+};
+
 // Helper for all fetch calls - always include credentials for HttpOnly cookies
-const fetchWithCreds = (url: string, options: RequestInit = {}) => {
-  return fetch(url, {
+const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
+  const response = await fetch(url, {
     ...options,
     credentials: 'include',
     headers: {
       ...options.headers,
     },
   });
+  
+  // Auto-logout on 401 for authenticated endpoints
+  if (response.status === 401) {
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+    if (!isAuthEndpoint) {
+      handle401();
+    }
+  }
+  
+  return response;
 };
 
 export const api = {
@@ -332,7 +352,7 @@ export const api = {
     });
   },
 
-  // Wishlist endpoints - cookies sent automatically
+  // Wishlist endpoints
   async getWishlist(): Promise<WishlistItem[]> {
     const response = await fetchWithCreds(`${API_BASE_URL}/wishlist`);
     if (!response.ok) throw new Error('Failed to fetch wishlist');
@@ -366,7 +386,7 @@ export const api = {
     if (!response.ok) throw new Error('Failed to clear wishlist');
   },
 
-  // Cart endpoints - cookies sent automatically
+  // Cart endpoints
   async getCart(): Promise<CartResponse> {
     const response = await fetchWithCreds(`${API_BASE_URL}/cart`);
     if (!response.ok) throw new Error('Failed to fetch cart');

@@ -22,9 +22,22 @@ export const OrderCard = ({ order }: OrderCardProps) => {
     return Number(price).toLocaleString('ru-RU') + ' ₽';
   };
 
-  // Progress steps for active orders
-  const progressSteps = ['Оформлен', 'Оплачен', 'Собирается', 'Отправлен', 'Доставлен'];
-  const currentStep = statusInfo.step;
+  // For cash payments, skip "Оплачен" step
+  const isCashPayment = order.payment_method === 'cash';
+  const progressSteps = isCashPayment
+    ? ['Оформлен', 'Собирается', 'Отправлен', 'Доставлен']
+    : ['Оформлен', 'Оплачен', 'Собирается', 'Отправлен', 'Доставлен'];
+  
+  // Adjust step for cash payments (skip "paid" step)
+  const getAdjustedStep = () => {
+    if (!isCashPayment) return statusInfo.step;
+    // For cash: pending=1, processing=2, shipped=3, delivered=4
+    if (statusInfo.step <= 1) return statusInfo.step;
+    if (statusInfo.step === 2) return statusInfo.step; // paid shouldn't happen for cash
+    return statusInfo.step - 1; // shift down by 1 after paid
+  };
+  const currentStep = getAdjustedStep();
+  const totalSteps = progressSteps.length;
 
   const paymentMethodLabel = (method: string) => {
     switch (method) {
@@ -66,7 +79,7 @@ export const OrderCard = ({ order }: OrderCardProps) => {
         </div>
 
         {/* Progress Bar - only show for active orders */}
-        {currentStep > 0 && currentStep <= 5 && (
+        {currentStep > 0 && currentStep <= totalSteps && (
           <div className="mt-4">
             <div className="flex justify-between mb-2">
               {progressSteps.map((step, index) => (
@@ -81,7 +94,7 @@ export const OrderCard = ({ order }: OrderCardProps) => {
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div 
                 className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
+                style={{ width: `${(currentStep / totalSteps) * 100}%` }}
               />
             </div>
           </div>
