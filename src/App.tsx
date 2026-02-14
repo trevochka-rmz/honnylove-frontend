@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import AuthCallback from "./pages/AuthCallback";
 import Profile from "./pages/Profile";
+import Orders from "./pages/Orders";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Delivery from "./pages/Delivery";
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/auth/google/callback" element={<AuthCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/delivery" element={<Delivery />} />
