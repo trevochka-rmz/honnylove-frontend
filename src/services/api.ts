@@ -207,8 +207,33 @@ export interface CartUpdateResponse {
   };
 }
 
-// Global 401 handler - auto logout on expired session
-const handle401 = () => {
+// Track if a refresh is already in progress to avoid multiple simultaneous refreshes
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
+const tryRefreshToken = async (): Promise<boolean> => {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+  return refreshPromise;
+};
+
+const forceLogout = () => {
   const { useAuthStore } = require('@/store/authStore');
   const state = useAuthStore.getState();
   if (state.isAuthenticated) {
@@ -218,23 +243,25 @@ const handle401 = () => {
 };
 
 // Helper for all fetch calls - always include credentials for HttpOnly cookies
-const fetchWithCreds = async (url: string, options: RequestInit = {}) => {
+const fetchWithCreds = async (url: string, options: RequestInit = {}, _isRetry = false): Promise<Response> => {
   const response = await fetch(url, {
     ...options,
     credentials: 'include',
-    headers: {
-      ...options.headers,
-    },
+    headers: { ...options.headers },
   });
-  
-  // Auto-logout on 401 for authenticated endpoints
-  if (response.status === 401) {
-    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+
+  if (response.status === 401 && !_isRetry) {
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh');
     if (!isAuthEndpoint) {
-      handle401();
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        // Retry the original request with the new cookie-based token
+        return fetchWithCreds(url, options, true);
+      }
+      forceLogout();
     }
   }
-  
+
   return response;
 };
 
