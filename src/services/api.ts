@@ -243,7 +243,7 @@ const forceLogout = () => {
 };
 
 // Helper for all fetch calls - always include credentials for HttpOnly cookies
-const fetchWithCreds = async (url: string, options: RequestInit = {}, _isRetry = false): Promise<Response> => {
+export const fetchWithCreds = async (url: string, options: RequestInit = {}, _isRetry = false): Promise<Response> => {
   const response = await fetch(url, {
     ...options,
     credentials: 'include',

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithCreds } from '@/services/api';
 
 export interface OrderItem {
   id: number;
@@ -58,9 +59,7 @@ export const useOrders = () => {
   return useQuery({
     queryKey: ['orders'],
     queryFn: async (): Promise<Order[]> => {
-      const response = await fetch(`${API_URL}/orders`, {
-        credentials: 'include',
-      });
+      const response = await fetchWithCreds(`${API_URL}/orders`);
       if (!response.ok) throw new Error('Failed to fetch orders');
       const data: OrdersResponse = await response.json();
       return data.orders || [];
@@ -76,9 +75,7 @@ export const useOrderDetail = (orderId: number | null) => {
   return useQuery({
     queryKey: ['order', orderId],
     queryFn: async (): Promise<Order> => {
-      const response = await fetch(`${API_URL}/orders/${orderId}`, {
-        credentials: 'include',
-      });
+      const response = await fetchWithCreds(`${API_URL}/orders/${orderId}`);
       if (!response.ok) throw new Error('Failed to fetch order details');
       const data: OrderDetailResponse = await response.json();
       return data.order;
