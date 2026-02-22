@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { API_BASE_URL } from '@/config/api';
+import { fetchWithCreds } from '@/services/api';
 
 export interface ProfileData {
   id: number;
@@ -37,9 +38,7 @@ export const useProfile = () => {
   return useQuery({
     queryKey: ['profile'],
     queryFn: async (): Promise<ProfileData> => {
-      const response = await fetch(`${API_URL}/users/profile`, {
-        credentials: 'include',
-      });
+      const response = await fetchWithCreds(`${API_URL}/users/profile`);
       if (!response.ok) throw new Error('Failed to fetch profile');
       return response.json();
     },
@@ -56,9 +55,8 @@ export const useUpdateProfile = () => {
   
   return useMutation({
     mutationFn: async (data: UpdateProfileData): Promise<ProfileData> => {
-      const response = await fetch(`${API_URL}/users/profile`, {
+      const response = await fetchWithCreds(`${API_URL}/users/profile`, {
         method: 'PUT',
-        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });

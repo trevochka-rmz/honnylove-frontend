@@ -1,4 +1,5 @@
 import { API_BASE_URL as BASE_URL } from '@/config/api';
+import { fetchWithCreds } from '@/services/api';
 
 const API_URL = `${BASE_URL}/api`;
 
@@ -105,17 +106,6 @@ export interface PaymentStatusResponse {
     captured_at?: string;
   };
 }
-
-// Helper for all fetch calls with credentials
-const fetchWithCreds = (url: string, options: RequestInit = {}) => {
-  return fetch(url, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      ...options.headers,
-    },
-  });
-};
 
 export const orderApi = {
   async getSelectedItems(selectedItems: number[]): Promise<SelectedItemsResponse> {
