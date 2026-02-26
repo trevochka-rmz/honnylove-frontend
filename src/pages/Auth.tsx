@@ -85,12 +85,14 @@ const Auth = () => {
         toast.success("Добро пожаловать!");
         navigate("/profile");
       } else {
-        const response = await api.register({
+        await api.register({
           username: formData.username,
           email: formData.email,
           password: formData.password,
         });
-        setAuth(response.user);
+        // After registration, auto-login to get user data and cookies
+        const loginResponse = await api.login(formData.email, formData.password);
+        setAuth(loginResponse.user);
         toast.success("Регистрация успешна!");
         navigate("/profile");
       }
