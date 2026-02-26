@@ -146,19 +146,31 @@ export interface AuthUser {
   last_name: string | null;
   phone: string | null;
   address: string | null;
+  discount_percentage?: string;
   is_active: boolean;
+  isVerified?: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface AuthResponse {
+export interface LoginResponse {
+  message: string;
   user: AuthUser;
+}
+
+export interface RegisterResponse {
+  message: string;
 }
 
 export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  address?: string;
+  sendVerification?: boolean;
 }
 
 export interface WishlistItem {
@@ -233,13 +245,15 @@ const tryRefreshToken = async (): Promise<boolean> => {
   return refreshPromise;
 };
 
-const forceLogout = () => {
-  const { useAuthStore } = require('@/store/authStore');
-  const state = useAuthStore.getState();
-  if (state.isAuthenticated) {
-    state.logout();
-    window.location.href = '/auth';
-  }
+const forceLogout = async () => {
+  try {
+    const mod = await import('@/store/authStore');
+    const state = mod.useAuthStore.getState();
+    if (state.isAuthenticated) {
+      state.logout();
+    }
+  } catch {}
+  window.location.href = '/auth';
 };
 
 // Helper for all fetch calls - always include credentials for HttpOnly cookies
@@ -250,15 +264,15 @@ export const fetchWithCreds = async (url: string, options: RequestInit = {}, _is
     headers: { ...options.headers },
   });
 
-  if (response.status === 401 && !_isRetry) {
+  if ((response.status === 401 || response.status === 403) && !_isRetry) {
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh');
     if (!isAuthEndpoint) {
       const refreshed = await tryRefreshToken();
       if (refreshed) {
-        // Retry the original request with the new cookie-based token
         return fetchWithCreds(url, options, true);
       }
-      forceLogout();
+      await forceLogout();
+      return response;
     }
   }
 
@@ -347,7 +361,7 @@ export const api = {
   },
 
   // Auth endpoints
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     const response = await fetchWithCreds(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -360,7 +374,7 @@ export const api = {
     return response.json();
   },
 
-  async register(data: RegisterData): Promise<AuthResponse> {
+  async register(data: RegisterData): Promise<RegisterResponse> {
     const response = await fetchWithCreds(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
