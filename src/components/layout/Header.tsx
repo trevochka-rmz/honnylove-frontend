@@ -182,10 +182,13 @@ export const Header = () => {
           </Sheet>
 
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
-            <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary">
+          <Link to="/" className="flex-shrink-0 text-center">
+            <h1 className="text-2xl md:text-3xl font-playfair font-bold text-primary leading-none">
               HonnyLove
             </h1>
+            <span className="text-[10px] md:text-xs font-roboto text-muted-foreground tracking-[0.2em] uppercase">
+              ХонниЛав
+            </span>
           </Link>
 
           {/* Search - Desktop */}

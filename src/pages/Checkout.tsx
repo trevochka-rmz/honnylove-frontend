@@ -72,6 +72,14 @@ const Checkout = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Check email verification
+  useEffect(() => {
+    if (profile && profile.is_verified === false) {
+      toast.error('Для оформления заказа необходимо подтвердить email');
+      navigate('/profile');
+    }
+  }, [profile, navigate]);
+
   useEffect(() => {
     if (profile) {
       const addressParts = profile.address?.split(',') || [];
