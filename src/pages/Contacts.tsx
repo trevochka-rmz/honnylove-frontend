@@ -140,6 +140,28 @@ const Contacts = () => {
             </div>
           </div>
 
+          {/* Support Section */}
+          <div className="bg-card border border-border rounded-2xl p-8 mb-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold mb-2">Нужна помощь?</h2>
+              <p className="text-muted-foreground">Наш менеджер ответит на все ваши вопросы и поможет с выбором</p>
+            </div>
+            <a
+              href="https://t.me/elsmish"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-4 p-5 bg-primary/5 border border-primary/20 rounded-xl hover:bg-primary/10 transition-colors mx-auto max-w-md"
+            >
+              <div className="bg-primary p-3 rounded-full">
+                <MessageCircle className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-lg">Написать менеджеру</h3>
+                <span className="text-sm text-muted-foreground">Telegram — быстрый ответ</span>
+              </div>
+            </a>
+          </div>
+
           {/* FAQ Quick Links */}
           <div className="bg-primary/10 rounded-2xl p-8 text-center">
             <h3 className="text-xl font-semibold mb-3">Часто задаваемые вопросы</h3>

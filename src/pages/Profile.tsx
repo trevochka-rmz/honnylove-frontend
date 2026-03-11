@@ -256,7 +256,7 @@ const Profile = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-card rounded-2xl p-6 border border-border">
+          <div className="bg-card rounded-2xl p-6 border border-border mb-8">
             <h2 className="text-xl font-semibold mb-6">Быстрые действия</h2>
             <div className="grid md:grid-cols-2 gap-4">
               <Button variant="outline" className="justify-start gap-3 h-14" asChild>
@@ -287,6 +287,15 @@ const Profile = () => {
               </Button>
             </div>
           </div>
+
+          {/* Support Banner */}
+          <Link 
+            to="/contacts" 
+            className="block bg-gradient-hero rounded-2xl p-6 text-center hover:opacity-90 transition-opacity"
+          >
+            <p className="text-primary-foreground/80 text-sm font-roboto mb-1">Остались вопросы?</p>
+            <p className="text-primary-foreground text-lg font-playfair font-semibold">Мы всегда готовы помочь →</p>
+          </Link>
         </div>
       </main>
 
