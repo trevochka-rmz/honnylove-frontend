@@ -353,15 +353,6 @@ const Checkout = () => {
                           className="font-roboto"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="zipCode" className="font-roboto">Индекс</Label>
-                        <Input
-                          id="zipCode"
-                          value={formData.zipCode}
-                          onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                          className="font-roboto"
-                        />
-                      </div>
                       
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
