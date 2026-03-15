@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Order, getOrderStatusInfo } from '@/hooks/useOrders';
-import { ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { ChevronDown, ChevronUp, Package, CreditCard, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { fetchWithCreds } from '@/services/api';
+import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
 
 interface OrderCardProps {
   order: Order;
@@ -8,8 +12,12 @@ interface OrderCardProps {
 
 export const OrderCard = ({ order }: OrderCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const statusInfo = getOrderStatusInfo(order.status);
   
+  const isOnlinePayment = order.payment_method === 'card' || order.payment_method === 'sbp';
+  const canPay = order.status === 'pending' && isOnlinePayment;
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -22,19 +30,40 @@ export const OrderCard = ({ order }: OrderCardProps) => {
     return Number(price).toLocaleString('ru-RU') + ' ₽';
   };
 
+  const handlePay = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsPaying(true);
+    try {
+      const response = await fetchWithCreds(`${API_BASE_URL}/api/payments/order/${order.id}/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) throw new Error('Payment creation failed');
+      const data = await response.json();
+      const confirmationUrl = data?.data?.payment?.confirmation_url || data?.data?.confirmation_url || data?.confirmation_url;
+      if (confirmationUrl) {
+        window.location.href = confirmationUrl;
+      } else {
+        throw new Error('No confirmation URL returned');
+      }
+    } catch (err) {
+      toast.error('Не удалось создать платёж. Попробуйте позже.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
+
   // For cash payments, skip "Оплачен" step
   const isCashPayment = order.payment_method === 'cash';
   const progressSteps = isCashPayment
     ? ['Оформлен', 'Собирается', 'Отправлен', 'Доставлен']
     : ['Оформлен', 'Оплачен', 'Собирается', 'Отправлен', 'Доставлен'];
   
-  // Adjust step for cash payments (skip "paid" step)
   const getAdjustedStep = () => {
     if (!isCashPayment) return statusInfo.step;
-    // For cash: pending=1, processing=2, shipped=3, delivered=4
     if (statusInfo.step <= 1) return statusInfo.step;
-    if (statusInfo.step === 2) return statusInfo.step; // paid shouldn't happen for cash
-    return statusInfo.step - 1; // shift down by 1 after paid
+    if (statusInfo.step === 2) return statusInfo.step;
+    return statusInfo.step - 1;
   };
   const currentStep = getAdjustedStep();
   const totalSteps = progressSteps.length;
@@ -66,6 +95,21 @@ export const OrderCard = ({ order }: OrderCardProps) => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {canPay && (
+              <Button
+                size="sm"
+                onClick={handlePay}
+                disabled={isPaying}
+                className="gap-1.5"
+              >
+                {isPaying ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4" />
+                )}
+                Оплатить
+              </Button>
+            )}
             <div className="text-right">
               <p className="font-semibold">{formatPrice(order.total_amount)}</p>
               <p className={`text-sm ${statusInfo.color}`}>{statusInfo.label}</p>
@@ -78,7 +122,7 @@ export const OrderCard = ({ order }: OrderCardProps) => {
           </div>
         </div>
 
-        {/* Progress Bar - only show for active orders */}
+        {/* Progress Bar */}
         {currentStep > 0 && currentStep <= totalSteps && (
           <div className="mt-4">
             <div className="flex justify-between mb-2">
@@ -176,6 +220,24 @@ export const OrderCard = ({ order }: OrderCardProps) => {
               <span>{formatPrice(order.total_amount)}</span>
             </div>
           </div>
+
+          {/* Pay button at bottom for pending online orders */}
+          {canPay && (
+            <div className="pt-4 border-t border-border">
+              <Button
+                className="w-full gap-2"
+                onClick={handlePay}
+                disabled={isPaying}
+              >
+                {isPaying ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CreditCard className="w-4 h-4" />
+                )}
+                Оплатить {formatPrice(order.total_amount)}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
