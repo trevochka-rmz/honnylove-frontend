@@ -373,7 +373,7 @@ const Checkout = () => {
                       value={formData.comment}
                       onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                       className="font-roboto"
-                      placeholder="Удобное время доставки, код домофона и т.д."
+                      placeholder="Удобное время доставки, код домофона, телеграм для связи и т.д."
                     />
                   </div>
                 </CardContent>
