@@ -144,18 +144,20 @@ const Checkout = () => {
 
       const shippingAddress = isPickup 
         ? `Самовывоз: ${storeAddress}`
-        : `${formData.city}, ${formData.street}${formData.zipCode ? `, ${formData.zipCode}` : ''}`;
+        : `${formData.city}, ${formData.street}`;
       
       const selectedItemIds = availableItems.map(item => item.id);
 
-      const checkoutData = {
+      const checkoutData: import('@/services/orderApi').CheckoutRequest = {
         selected_items: selectedItemIds,
+        customer_first_name: formData.firstName,
+        customer_last_name: formData.lastName,
+        customer_phone: formData.phone,
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod as 'cash' | 'card' | 'sbp',
         notes: formData.comment || undefined,
         shipping_cost: deliveryFee,
-        tax_amount: 0,
-        discount_amount: 0,
+        save_address: !isPickup && saveAddress,
       };
 
       if (formData.paymentMethod === 'cash') {
