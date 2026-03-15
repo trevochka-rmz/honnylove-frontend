@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
-import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/hooks/useProfile';
 import { useSettings } from '@/hooks/useSettings';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -29,17 +29,16 @@ const Checkout = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
-  const updateProfile = useUpdateProfile();
+  
   const navigate = useNavigate();
 
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    firstName: '',
+    lastName: '',
     phone: '',
     street: '',
     city: '',
-    zipCode: '',
     comment: '',
     paymentMethod: 'sbp',
   });
@@ -88,8 +87,8 @@ const Checkout = () => {
       
       setFormData(prev => ({
         ...prev,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username,
-        email: profile.email,
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
         phone: profile.phone || '',
         city: city,
         street: street,
@@ -117,7 +116,7 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.phone) {
       toast.error('Пожалуйста, заполните все обязательные поля');
       return;
     }
@@ -135,28 +134,23 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // Save address to profile if delivery and checkbox is checked
-      if (!isPickup && saveAddress && formData.city && formData.street) {
-        const fullAddress = `${formData.city}, ${formData.street}`;
-        try {
-          await updateProfile.mutateAsync({ address: fullAddress });
-        } catch (error) {}
-      }
 
       const shippingAddress = isPickup 
         ? `Самовывоз: ${storeAddress}`
-        : `${formData.city}, ${formData.street}${formData.zipCode ? `, ${formData.zipCode}` : ''}`;
+        : `${formData.city}, ${formData.street}`;
       
       const selectedItemIds = availableItems.map(item => item.id);
 
-      const checkoutData = {
+      const checkoutData: import('@/services/orderApi').CheckoutRequest = {
         selected_items: selectedItemIds,
+        customer_first_name: formData.firstName,
+        customer_last_name: formData.lastName,
+        customer_phone: formData.phone,
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod as 'cash' | 'card' | 'sbp',
         notes: formData.comment || undefined,
         shipping_cost: deliveryFee,
-        tax_amount: 0,
-        discount_amount: 0,
+        save_address: !isPickup && saveAddress,
       };
 
       if (formData.paymentMethod === 'cash') {
@@ -218,27 +212,31 @@ const Checkout = () => {
                   <CardTitle className="font-playfair">Контактная информация</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="name" className="font-roboto">
-                      Имя <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="name"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="font-roboto"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email" className="font-roboto">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="font-roboto"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName" className="font-roboto">
+                        Имя <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="firstName"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        className="font-roboto"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName" className="font-roboto">
+                        Фамилия <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="lastName"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        className="font-roboto"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="phone" className="font-roboto">
@@ -348,15 +346,6 @@ const Checkout = () => {
                           className="font-roboto"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="zipCode" className="font-roboto">Индекс</Label>
-                        <Input
-                          id="zipCode"
-                          value={formData.zipCode}
-                          onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                          className="font-roboto"
-                        />
-                      </div>
                       
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -377,7 +366,7 @@ const Checkout = () => {
                       value={formData.comment}
                       onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                       className="font-roboto"
-                      placeholder="Удобное время доставки, код домофона и т.д."
+                      placeholder="Удобное время доставки, код домофона, телеграм для связи и т.д."
                     />
                   </div>
                 </CardContent>
