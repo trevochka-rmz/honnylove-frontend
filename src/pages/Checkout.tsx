@@ -116,7 +116,7 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.phone) {
       toast.error('Пожалуйста, заполните все обязательные поля');
       return;
     }
