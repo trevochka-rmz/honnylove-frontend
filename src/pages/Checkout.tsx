@@ -87,8 +87,8 @@ const Checkout = () => {
       
       setFormData(prev => ({
         ...prev,
-        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.username,
-        email: profile.email,
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
         phone: profile.phone || '',
         city: city,
         street: street,
