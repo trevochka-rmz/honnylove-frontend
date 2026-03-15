@@ -34,12 +34,11 @@ const Checkout = () => {
 
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    firstName: '',
+    lastName: '',
     phone: '',
     street: '',
     city: '',
-    zipCode: '',
     comment: '',
     paymentMethod: 'sbp',
   });

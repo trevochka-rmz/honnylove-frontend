@@ -38,12 +38,14 @@ export interface SelectedItemsResponse {
 
 export interface CheckoutRequest {
   selected_items: number[];
+  customer_first_name: string;
+  customer_last_name: string;
+  customer_phone: string;
   shipping_address: string;
   payment_method: 'cash' | 'card' | 'sbp';
   notes?: string;
   shipping_cost: number;
-  tax_amount: number;
-  discount_amount: number;
+  save_address: boolean;
 }
 
 export interface OrderResponse {
