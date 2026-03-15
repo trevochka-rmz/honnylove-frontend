@@ -53,6 +53,47 @@ interface OrderDetailResponse {
 
 const API_URL = `${API_BASE_URL}/api`;
 
+// Active orders for profile (pending, paid, processing, shipped, delivered)
+export const useActiveOrders = (limit = 5) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  return useQuery({
+    queryKey: ['orders', 'active', limit],
+    queryFn: async (): Promise<Order[]> => {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      ['pending', 'paid', 'processing', 'shipped', 'delivered'].forEach(s => params.append('status', s));
+      const response = await fetchWithCreds(`${API_URL}/orders?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data: OrdersResponse = await response.json();
+      return data.orders || [];
+    },
+    enabled: isAuthenticated,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+// All orders with pagination
+export const useAllOrders = (page = 1, limit = 10) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  
+  return useQuery({
+    queryKey: ['orders', 'all', page, limit],
+    queryFn: async () => {
+      const response = await fetchWithCreds(`${API_URL}/orders?page=${page}&limit=${limit}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const data: OrdersResponse = await response.json();
+      return {
+        orders: data.orders || [],
+        pagination: data.pagination,
+      };
+    },
+    enabled: isAuthenticated,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+// Keep legacy hook for backward compatibility
 export const useOrders = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
