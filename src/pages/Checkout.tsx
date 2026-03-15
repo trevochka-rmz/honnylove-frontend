@@ -134,13 +134,6 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // Save address to profile if delivery and checkbox is checked
-      if (!isPickup && saveAddress && formData.city && formData.street) {
-        const fullAddress = `${formData.city}, ${formData.street}`;
-        try {
-          await updateProfile.mutateAsync({ address: fullAddress });
-        } catch (error) {}
-      }
 
       const shippingAddress = isPickup 
         ? `Самовывоз: ${storeAddress}`
