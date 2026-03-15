@@ -29,7 +29,7 @@ const Checkout = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
-  const updateProfile = useUpdateProfile();
+  
   const navigate = useNavigate();
 
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
