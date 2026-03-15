@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useCartApiStore } from '@/store/cartApiStore';
 import { useAuthStore } from '@/store/authStore';
-import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/hooks/useProfile';
 import { useSettings } from '@/hooks/useSettings';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
