@@ -219,27 +219,31 @@ const Checkout = () => {
                   <CardTitle className="font-playfair">Контактная информация</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="name" className="font-roboto">
-                      Имя <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="name"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="font-roboto"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email" className="font-roboto">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="font-roboto"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName" className="font-roboto">
+                        Имя <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="firstName"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        className="font-roboto"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName" className="font-roboto">
+                        Фамилия <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="lastName"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        className="font-roboto"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="phone" className="font-roboto">
