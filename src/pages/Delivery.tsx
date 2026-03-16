@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useSettings } from "@/hooks/useSettings";
-import { Truck, CreditCard, Clock, MapPin, Phone, Mail, Loader2 } from "lucide-react";
+import { Truck, CreditCard, Clock, MapPin, Phone, Mail, Loader2, Send } from "lucide-react";
 
 const Delivery = () => {
   const { data: settings, isLoading } = useSettings();
