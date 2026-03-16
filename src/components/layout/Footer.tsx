@@ -200,6 +200,12 @@ export const Footer = () => {
                   {email}
                 </a>
               </li>
+              <li className="flex items-center gap-2 text-muted-foreground">
+                <Send className="h-4 w-4 flex-shrink-0" />
+                <a href="https://t.me/elsmish" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  Telegram менеджер
+                </a>
+              </li>
               <li className="flex items-start gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <span>{address}</span>

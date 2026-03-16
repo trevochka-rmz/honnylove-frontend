@@ -109,6 +109,15 @@ const Delivery = () => {
               <Mail className="h-5 w-5" />
               {email}
             </a>
+            <a 
+              href="https://t.me/elsmish" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+            >
+              <Send className="h-5 w-5" />
+              Telegram менеджер
+            </a>
           </div>
           {settings?.address && (
             <p className="flex items-center justify-center gap-2 text-muted-foreground mt-4">
