@@ -247,7 +247,6 @@ const tryRefreshToken = async (): Promise<boolean> => {
 };
 
 const forceLogout = () => {
-  const { useAuthStore } = require('@/store/authStore');
   try {
     const state = useAuthStore.getState();
     if (state.isAuthenticated) {

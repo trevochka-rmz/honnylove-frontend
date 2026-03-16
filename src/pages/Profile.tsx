@@ -23,6 +23,7 @@ import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
 import { OrdersSection } from "@/components/profile/OrdersSection";
 import { EmailVerificationBanner } from "@/components/profile/EmailVerificationBanner";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const Profile = () => {
   const navigate = useNavigate();
