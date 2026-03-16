@@ -81,7 +81,7 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const response = await api.login(formData.email, formData.password);
+        const response = await api.login(formData.email, formData.password, formData.rememberMe);
         setAuth(response.user);
         toast.success("Добро пожаловать!");
         navigate("/profile");
