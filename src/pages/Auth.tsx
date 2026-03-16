@@ -25,6 +25,7 @@ const Auth = () => {
     password: "",
     confirmPassword: "",
     agreeToTerms: false,
+    rememberMe: false,
   });
 
   useEffect(() => {
