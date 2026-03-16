@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useCartApiStore } from '@/store/cartApiStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 
 export interface User {
   id: number;
