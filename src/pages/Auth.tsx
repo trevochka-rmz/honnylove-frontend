@@ -245,7 +245,13 @@ const Auth = () => {
             {isLogin && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Checkbox id="remember" />
+                  <Checkbox 
+                    id="remember" 
+                    checked={formData.rememberMe}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, rememberMe: checked as boolean }))
+                    }
+                  />
                   <Label htmlFor="remember" className="text-sm">Запомнить меня</Label>
                 </div>
                 <Link to="/forgot-password" className="text-sm text-primary hover:underline">
