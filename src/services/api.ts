@@ -245,10 +245,10 @@ const tryRefreshToken = async (): Promise<boolean> => {
   return refreshPromise;
 };
 
-const forceLogout = async () => {
+const forceLogout = () => {
+  const { useAuthStore } = require('@/store/authStore');
   try {
-    const mod = await import('@/store/authStore');
-    const state = mod.useAuthStore.getState();
+    const state = useAuthStore.getState();
     if (state.isAuthenticated) {
       state.logout();
     }

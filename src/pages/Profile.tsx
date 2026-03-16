@@ -53,7 +53,6 @@ const Profile = () => {
   const handleLogout = async () => {
     // Call server logout to clear HttpOnly cookies
     try {
-      const { api } = await import('@/services/api');
       await api.logout();
     } catch {}
     // Clear cart state before logout

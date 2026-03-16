@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSearchProducts } from '@/hooks/useSearchProducts';
 import { useDebounce } from '@/hooks/useDebounce';
+import { api } from '@/services/api';
 
 export const Header = () => {
   const { getTotalItems, fetchCart } = useCartApiStore();

@@ -46,12 +46,8 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
         // Clear other stores that depend on auth
-        import('@/store/cartApiStore').then(({ useCartApiStore }) => {
-          useCartApiStore.getState().clearLocalState();
-        });
-        import('@/store/wishlistStore').then(({ useWishlistStore }) => {
-          useWishlistStore.getState().clearLocalState();
-        });
+        useCartApiStore.getState().clearLocalState();
+        useWishlistStore.getState().clearLocalState();
       },
     }),
     {
