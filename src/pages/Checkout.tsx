@@ -169,9 +169,9 @@ const Checkout = () => {
           navigate(`/order/${response.data.order.id}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Checkout error:', error);
-      toast.error(error instanceof Error ? error.message : 'Ошибка оформления заказа');
+      toast.error(error?.message || 'Ошибка оформления заказа');
     } finally {
       setIsSubmitting(false);
     }

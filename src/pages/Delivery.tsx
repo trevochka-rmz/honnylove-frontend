@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { useSettings } from "@/hooks/useSettings";
-import { Truck, CreditCard, Clock, MapPin, Phone, Mail, Loader2 } from "lucide-react";
+import { Truck, CreditCard, Clock, MapPin, Phone, Mail, Loader2, Send } from "lucide-react";
 
 const Delivery = () => {
   const { data: settings, isLoading } = useSettings();
@@ -108,6 +108,15 @@ const Delivery = () => {
             >
               <Mail className="h-5 w-5" />
               {email}
+            </a>
+            <a 
+              href="https://t.me/elsmish" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+            >
+              <Send className="h-5 w-5" />
+              Telegram менеджер
             </a>
           </div>
           {settings?.address && (

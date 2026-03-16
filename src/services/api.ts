@@ -361,11 +361,11 @@ export const api = {
   },
 
   // Auth endpoints
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string, rememberMe: boolean = false): Promise<LoginResponse> {
     const response = await fetchWithCreds(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, rememberMe }),
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

@@ -109,6 +109,9 @@ const Returns = () => {
                     ✉️ {settings.email}
                   </a>
                 )}
+                <a href="https://t.me/elsmish" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                  💬 Telegram менеджер
+                </a>
               </div>
               {settings?.address && (
                 <p className="text-muted-foreground mt-4">
