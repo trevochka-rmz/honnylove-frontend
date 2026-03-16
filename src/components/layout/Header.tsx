@@ -247,7 +247,6 @@ export const Header = () => {
                   <DropdownMenuItem 
                     onClick={async () => {
                       try {
-                        const { api } = await import('@/services/api');
                         await api.logout();
                       } catch {}
                       logout();
