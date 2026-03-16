@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useCartApiStore } from '@/store/cartApiStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 
 export interface User {
   id: number;
@@ -44,12 +46,8 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
         // Clear other stores that depend on auth
-        import('@/store/cartApiStore').then(({ useCartApiStore }) => {
-          useCartApiStore.getState().clearLocalState();
-        });
-        import('@/store/wishlistStore').then(({ useWishlistStore }) => {
-          useWishlistStore.getState().clearLocalState();
-        });
+        useCartApiStore.getState().clearLocalState();
+        useWishlistStore.getState().clearLocalState();
       },
     }),
     {

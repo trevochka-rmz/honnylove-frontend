@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck, Store } from 'lucide-react';
 import { russianCities } from '@/data/cities';
-import { orderApi } from '@/services/orderApi';
+import { orderApi, type CheckoutRequest } from '@/services/orderApi';
 
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
@@ -141,7 +141,7 @@ const Checkout = () => {
       
       const selectedItemIds = availableItems.map(item => item.id);
 
-      const checkoutData: import('@/services/orderApi').CheckoutRequest = {
+      const checkoutData: CheckoutRequest = {
         selected_items: selectedItemIds,
         customer_first_name: formData.firstName,
         customer_last_name: formData.lastName,

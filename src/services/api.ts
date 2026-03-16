@@ -1,4 +1,5 @@
 import { API_BASE_URL as BASE_URL } from '@/config/api';
+import { useAuthStore } from '@/store/authStore';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
@@ -245,10 +246,9 @@ const tryRefreshToken = async (): Promise<boolean> => {
   return refreshPromise;
 };
 
-const forceLogout = async () => {
+const forceLogout = () => {
   try {
-    const mod = await import('@/store/authStore');
-    const state = mod.useAuthStore.getState();
+    const state = useAuthStore.getState();
     if (state.isAuthenticated) {
       state.logout();
     }

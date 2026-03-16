@@ -23,6 +23,7 @@ import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
 import { OrdersSection } from "@/components/profile/OrdersSection";
 import { EmailVerificationBanner } from "@/components/profile/EmailVerificationBanner";
 import { toast } from "sonner";
+import { api } from "@/services/api";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -53,7 +54,6 @@ const Profile = () => {
   const handleLogout = async () => {
     // Call server logout to clear HttpOnly cookies
     try {
-      const { api } = await import('@/services/api');
       await api.logout();
     } catch {}
     // Clear cart state before logout

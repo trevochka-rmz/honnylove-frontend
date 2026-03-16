@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSearchProducts } from '@/hooks/useSearchProducts';
 import { useDebounce } from '@/hooks/useDebounce';
+import { api } from '@/services/api';
 
 export const Header = () => {
   const { getTotalItems, fetchCart } = useCartApiStore();
@@ -227,7 +228,7 @@ export const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{user?.username}</p>
+                    <p className="text-sm font-medium">{user?.first_name || user?.username}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
@@ -247,7 +248,6 @@ export const Header = () => {
                   <DropdownMenuItem 
                     onClick={async () => {
                       try {
-                        const { api } = await import('@/services/api');
                         await api.logout();
                       } catch {}
                       logout();
