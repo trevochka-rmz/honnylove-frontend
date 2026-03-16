@@ -141,7 +141,7 @@ const Checkout = () => {
       
       const selectedItemIds = availableItems.map(item => item.id);
 
-      const checkoutData: import('@/services/orderApi').CheckoutRequest = {
+      const checkoutData: CheckoutRequest = {
         selected_items: selectedItemIds,
         customer_first_name: formData.firstName,
         customer_last_name: formData.lastName,
