@@ -1,4 +1,5 @@
 import { API_BASE_URL as BASE_URL } from '@/config/api';
+import { useAuthStore } from '@/store/authStore';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
