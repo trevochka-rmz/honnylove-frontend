@@ -121,6 +121,11 @@ const Checkout = () => {
       return;
     }
 
+    if (formData.phone.length !== 10) {
+      toast.error('Введите корректный номер телефона (10 цифр)');
+      return;
+    }
+
     if (!isPickup && (!formData.street || !formData.city)) {
       toast.error('Пожалуйста, укажите адрес доставки');
       return;
