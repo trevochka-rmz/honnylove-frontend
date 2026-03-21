@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,19 @@ const formatPhoneMask = (digits: string): string => {
     }
   }
   return result;
+};
+
+const getCursorPosForDigitCount = (count: number): number => {
+  if (count === 0) return 0;
+  const mask = '___ ___-__-__';
+  let digits = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] === '_') {
+      digits++;
+      if (digits === count) return i + 1;
+    }
+  }
+  return mask.length;
 };
 
 const Checkout = () => {
@@ -270,12 +283,43 @@ const Checkout = () => {
                         id="phone"
                         type="tel"
                         required
-                        placeholder=""
+                        placeholder="___ ___-__-__"
                         maxLength={15}
-                        value={formatPhoneMask(formData.phone)}
+                        value={formData.phone ? formatPhoneMask(formData.phone) : ''}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
                           setFormData({ ...formData, phone: digits });
+                          const input = e.target;
+                          const pos = getCursorPosForDigitCount(digits.length);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        onKeyDown={(e) => {
+                          const input = e.target as HTMLInputElement;
+                          if (e.key === 'Backspace' && formData.phone) {
+                            e.preventDefault();
+                            const newDigits = formData.phone.slice(0, -1);
+                            setFormData(prev => ({ ...prev, phone: newDigits }));
+                            const pos = getCursorPosForDigitCount(newDigits.length);
+                            requestAnimationFrame(() => {
+                              input.setSelectionRange(pos, pos);
+                            });
+                          }
+                        }}
+                        onClick={(e) => {
+                          const input = e.target as HTMLInputElement;
+                          const pos = getCursorPosForDigitCount(formData.phone?.length || 0);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        onFocus={(e) => {
+                          const input = e.target;
+                          const pos = getCursorPosForDigitCount(formData.phone?.length || 0);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
                         }}
                         className="font-roboto rounded-l-none tracking-wide font-mono"
                       />
