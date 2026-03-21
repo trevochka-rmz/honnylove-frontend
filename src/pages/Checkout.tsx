@@ -283,12 +283,43 @@ const Checkout = () => {
                         id="phone"
                         type="tel"
                         required
-                        placeholder=""
+                        placeholder="___ ___-__-__"
                         maxLength={15}
-                        value={formatPhoneMask(formData.phone)}
+                        value={formData.phone ? formatPhoneMask(formData.phone) : ''}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
                           setFormData({ ...formData, phone: digits });
+                          const input = e.target;
+                          const pos = getCursorPosForDigitCount(digits.length);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        onKeyDown={(e) => {
+                          const input = e.target as HTMLInputElement;
+                          if (e.key === 'Backspace' && formData.phone) {
+                            e.preventDefault();
+                            const newDigits = formData.phone.slice(0, -1);
+                            setFormData(prev => ({ ...prev, phone: newDigits }));
+                            const pos = getCursorPosForDigitCount(newDigits.length);
+                            requestAnimationFrame(() => {
+                              input.setSelectionRange(pos, pos);
+                            });
+                          }
+                        }}
+                        onClick={(e) => {
+                          const input = e.target as HTMLInputElement;
+                          const pos = getCursorPosForDigitCount(formData.phone?.length || 0);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
+                        }}
+                        onFocus={(e) => {
+                          const input = e.target;
+                          const pos = getCursorPosForDigitCount(formData.phone?.length || 0);
+                          requestAnimationFrame(() => {
+                            input.setSelectionRange(pos, pos);
+                          });
                         }}
                         className="font-roboto rounded-l-none tracking-wide font-mono"
                       />
