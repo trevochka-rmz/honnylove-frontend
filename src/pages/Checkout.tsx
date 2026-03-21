@@ -415,7 +415,7 @@ const Checkout = () => {
                     }`}>
                       <RadioGroupItem value="cash" id="cash" />
                       <Banknote className="h-5 w-5 text-primary" />
-                      <span className="font-roboto flex-1">Наличными при получении</span>
+                      <span className="font-roboto flex-1">Оплата при получении</span>
                     </label>
                   </RadioGroup>
                 </CardContent>
