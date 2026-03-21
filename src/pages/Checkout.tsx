@@ -242,14 +242,27 @@ const Checkout = () => {
                     <Label htmlFor="phone" className="font-roboto">
                       Телефон <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="font-roboto"
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-roboto">
+                        +7
+                      </span>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        required
+                        placeholder="9537757974"
+                        maxLength={10}
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData({ ...formData, phone: digits });
+                        }}
+                        className="font-roboto rounded-l-none"
+                      />
+                    </div>
+                    {formData.phone && formData.phone.length < 10 && (
+                      <p className="text-xs text-destructive mt-1">Введите 10 цифр номера</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
