@@ -255,14 +255,14 @@ const Checkout = () => {
                         id="phone"
                         type="tel"
                         required
-                        placeholder="9537757974"
-                        maxLength={10}
-                        value={formData.phone}
+                        placeholder="___  ___-__-__"
+                        maxLength={15}
+                        value={formData.phone ? formatPhoneMask(formData.phone) : ''}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
                           setFormData({ ...formData, phone: digits });
                         }}
-                        className="font-roboto rounded-l-none"
+                        className="font-roboto rounded-l-none tracking-wider"
                       />
                     </div>
                     {formData.phone && formData.phone.length < 10 && (
