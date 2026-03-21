@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck, Store } from 'lucide-react';
 import { russianCities } from '@/data/cities';
+import { orderApi, type CheckoutRequest } from '@/services/orderApi';
 
 const formatPhoneMask = (digits: string): string => {
   const d = digits.replace(/\D/g, '').slice(0, 10);
