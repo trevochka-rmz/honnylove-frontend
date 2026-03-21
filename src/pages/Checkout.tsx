@@ -89,7 +89,7 @@ const Checkout = () => {
         ...prev,
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
-        phone: profile.phone || '',
+        phone: profile.phone ? profile.phone.replace(/^\+7/, '') : '',
         city: city,
         street: street,
       }));
