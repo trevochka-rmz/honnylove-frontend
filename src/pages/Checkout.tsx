@@ -145,7 +145,7 @@ const Checkout = () => {
         selected_items: selectedItemIds,
         customer_first_name: formData.firstName,
         customer_last_name: formData.lastName,
-        customer_phone: formData.phone,
+        customer_phone: `+7${formData.phone}`,
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod as 'cash' | 'card' | 'sbp',
         notes: formData.comment || undefined,
