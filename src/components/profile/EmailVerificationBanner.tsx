@@ -122,6 +122,9 @@ export const EmailVerificationBanner = ({ email, onVerified }: EmailVerification
               <p className="text-sm text-center">
                 Код отправлен на <span className="font-medium">{email}</span>
               </p>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                💌 Не нашли письмо? Проверьте папку «Спам» или «Промоакции»
+              </p>
             </div>
 
             <div className="space-y-2">

@@ -89,7 +89,7 @@ const Checkout = () => {
         ...prev,
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
-        phone: profile.phone || '',
+        phone: profile.phone ? profile.phone.replace(/^\+7/, '') : '',
         city: city,
         street: street,
       }));
@@ -121,6 +121,11 @@ const Checkout = () => {
       return;
     }
 
+    if (formData.phone.length !== 10) {
+      toast.error('Введите корректный номер телефона (10 цифр)');
+      return;
+    }
+
     if (!isPickup && (!formData.street || !formData.city)) {
       toast.error('Пожалуйста, укажите адрес доставки');
       return;
@@ -145,7 +150,7 @@ const Checkout = () => {
         selected_items: selectedItemIds,
         customer_first_name: formData.firstName,
         customer_last_name: formData.lastName,
-        customer_phone: formData.phone,
+        customer_phone: `+7${formData.phone}`,
         shipping_address: shippingAddress,
         payment_method: formData.paymentMethod as 'cash' | 'card' | 'sbp',
         notes: formData.comment || undefined,
@@ -242,14 +247,27 @@ const Checkout = () => {
                     <Label htmlFor="phone" className="font-roboto">
                       Телефон <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="font-roboto"
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-sm font-roboto">
+                        +7
+                      </span>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        required
+                        placeholder="9537757974"
+                        maxLength={10}
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setFormData({ ...formData, phone: digits });
+                        }}
+                        className="font-roboto rounded-l-none"
+                      />
+                    </div>
+                    {formData.phone && formData.phone.length < 10 && (
+                      <p className="text-xs text-destructive mt-1">Введите 10 цифр номера</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -402,7 +420,7 @@ const Checkout = () => {
                     }`}>
                       <RadioGroupItem value="cash" id="cash" />
                       <Banknote className="h-5 w-5 text-primary" />
-                      <span className="font-roboto flex-1">Наличными при получении</span>
+                      <span className="font-roboto flex-1">Оплата при получении</span>
                     </label>
                   </RadioGroup>
                 </CardContent>
