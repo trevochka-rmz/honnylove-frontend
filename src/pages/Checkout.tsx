@@ -26,11 +26,16 @@ import { orderApi, type CheckoutRequest } from '@/services/orderApi';
 
 const formatPhoneMask = (digits: string): string => {
   const d = digits.replace(/\D/g, '').slice(0, 10);
-  if (!d) return '';
-  let result = d.slice(0, 3);
-  if (d.length > 3) result += '  ' + d.slice(3, 6);
-  if (d.length > 6) result += '-' + d.slice(6, 8);
-  if (d.length > 8) result += '-' + d.slice(8, 10);
+  const mask = '___ ___-__-__';
+  let result = '';
+  let di = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] === '_') {
+      result += di < d.length ? d[di++] : '_';
+    } else {
+      result += mask[i];
+    }
+  }
   return result;
 };
 
