@@ -24,6 +24,16 @@ import { Loader2, MapPin, CreditCard, Banknote, Smartphone, Truck, Store } from 
 import { russianCities } from '@/data/cities';
 import { orderApi, type CheckoutRequest } from '@/services/orderApi';
 
+const formatPhoneMask = (digits: string): string => {
+  const d = digits.replace(/\D/g, '').slice(0, 10);
+  if (!d) return '';
+  let result = d.slice(0, 3);
+  if (d.length > 3) result += '  ' + d.slice(3, 6);
+  if (d.length > 6) result += '-' + d.slice(6, 8);
+  if (d.length > 8) result += '-' + d.slice(8, 10);
+  return result;
+};
+
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -255,14 +265,14 @@ const Checkout = () => {
                         id="phone"
                         type="tel"
                         required
-                        placeholder="9537757974"
-                        maxLength={10}
-                        value={formData.phone}
+                        placeholder="___  ___-__-__"
+                        maxLength={15}
+                        value={formData.phone ? formatPhoneMask(formData.phone) : ''}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
                           setFormData({ ...formData, phone: digits });
                         }}
-                        className="font-roboto rounded-l-none"
+                        className="font-roboto rounded-l-none tracking-wider"
                       />
                     </div>
                     {formData.phone && formData.phone.length < 10 && (
