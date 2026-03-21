@@ -39,6 +39,19 @@ const formatPhoneMask = (digits: string): string => {
   return result;
 };
 
+const getCursorPosForDigitCount = (count: number): number => {
+  if (count === 0) return 0;
+  const mask = '___ ___-__-__';
+  let digits = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] === '_') {
+      digits++;
+      if (digits === count) return i + 1;
+    }
+  }
+  return mask.length;
+};
+
 const Checkout = () => {
   const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
