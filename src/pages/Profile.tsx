@@ -186,11 +186,14 @@ const Profile = () => {
               <p className="text-2xl font-bold">{profile?.cartCount || 0}</p>
               <p className="text-sm text-muted-foreground">В корзине</p>
             </Link>
-            <div className="bg-card rounded-xl p-4 text-center border border-border">
+            <Link
+              to="/orders"
+              className="bg-card rounded-xl p-4 text-center border border-border hover:border-primary transition-colors cursor-pointer"
+            >
               <Package className="w-8 h-8 text-primary mx-auto mb-2" />
               <p className="text-2xl font-bold">{profile?.orderCount || 0}</p>
               <p className="text-sm text-muted-foreground">Заказов</p>
-            </div>
+            </Link>
           </div>
 
           {/* Orders Section */}
