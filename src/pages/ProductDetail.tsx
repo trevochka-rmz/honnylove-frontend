@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { ProductCard } from '@/components/product/ProductCard';
+import { VariantSelector } from '@/components/product/VariantSelector';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,9 +11,9 @@ import { useProduct, useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
 import { useWishlistStore } from '@/store/wishlistStore';
 import { useCartApiStore } from '@/store/cartApiStore';
+import { StockVariant } from '@/services/api';
 import { Heart, ShoppingCart, Star, ChevronLeft, Loader2, ChevronUp, ChevronDown, ChevronRight, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductDetail = () => {
   const { productSlug } = useParams();
@@ -26,32 +27,62 @@ const ProductDetail = () => {
 
   const allProducts = allProductsData?.products || [];
 
-  const [selectedVariant, setSelectedVariant] = useState('');
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
-  // Get referrer category path from location state
   const referrerPath = location.state?.categoryPath || null;
 
-  // Get all images
-  const allImages = product ? [product.image, ...(product.images || [])].filter(Boolean).filter(img => img && img.trim() !== '' && !img.includes('undefined')) : [];
-  
-  // Check if images are valid
-  const hasValidImages = allImages.length > 0;
+  const stockVariants = product?.stockVariants || [];
+  const hasMultipleVariants = (product?.variantCount || 1) > 1;
+  const isClothing = product?.product_type === 'clothing';
 
-  // Set initial variant when product loads
-  useEffect(() => {
-    if (product && !selectedVariant && product.variants?.[0]?.value) {
-      setSelectedVariant(product.variants[0].value);
+  const selectedVariant = useMemo(() => {
+    return stockVariants.find(v => v.id === selectedVariantId) || null;
+  }, [stockVariants, selectedVariantId]);
+
+  // Current display price/images based on selected variant
+  const displayPrice = useMemo(() => {
+    if (selectedVariant) return selectedVariant.price;
+    return product?.price || 0;
+  }, [selectedVariant, product]);
+
+  const displayDiscountPrice = useMemo(() => {
+    if (selectedVariant) return selectedVariant.discountPrice || undefined;
+    return product?.discountPrice;
+  }, [selectedVariant, product]);
+
+  const displayImages = useMemo(() => {
+    if (selectedVariant) {
+      return [selectedVariant.image, ...(selectedVariant.images || [])].filter(Boolean).filter(img => img && img.trim() !== '' && !img.includes('undefined'));
     }
-  }, [product, selectedVariant]);
+    if (!product) return [];
+    return [product.image, ...(product.images || [])].filter(Boolean).filter(img => img && img.trim() !== '' && !img.includes('undefined'));
+  }, [selectedVariant, product]);
 
-  // Reset image index when product changes
+  const displayInStock = selectedVariant ? selectedVariant.inStock : (product?.inStock || false);
+
+  // Set initial variant
+  useEffect(() => {
+    if (product && stockVariants.length > 0 && !selectedVariantId) {
+      const firstInStock = stockVariants.find(v => v.inStock) || stockVariants[0];
+      setSelectedVariantId(firstInStock.id);
+    }
+  }, [product, stockVariants, selectedVariantId]);
+
+  // Reset on product change
   useEffect(() => {
     setSelectedImageIndex(0);
+    setSelectedVariantId(null);
+    setQuantity(1);
   }, [productSlug]);
+
+  // Reset image when variant changes
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [selectedVariantId]);
 
   if (isLoading) {
     return (
@@ -86,20 +117,13 @@ const ProductDetail = () => {
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  const discount = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
+  const discount = displayDiscountPrice
+    ? Math.round(((displayPrice - displayDiscountPrice) / displayPrice) * 100)
     : 0;
 
-  // Build category breadcrumb from product data
   const buildBreadcrumb = () => {
     const crumbs: { name: string; categoryId: number | null }[] = [];
-    
-    if (referrerPath && referrerPath.length > 0) {
-      // Use referrer path if available
-      return referrerPath;
-    }
-    
-    // Build from product category data
+    if (referrerPath && referrerPath.length > 0) return referrerPath;
     if (product.top_category_name && product.top_category_id) {
       crumbs.push({ name: product.top_category_name, categoryId: product.top_category_id });
     }
@@ -109,11 +133,14 @@ const ProductDetail = () => {
     if (product.category_name && product.category_id && product.category_level && product.category_level >= 3) {
       crumbs.push({ name: product.category_name, categoryId: product.category_id });
     }
-    
     return crumbs;
   };
 
   const breadcrumbPath = buildBreadcrumb();
+
+  const handleSelectVariant = (variant: StockVariant) => {
+    setSelectedVariantId(variant.id);
+  };
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -122,9 +149,15 @@ const ProductDetail = () => {
       return;
     }
 
+    if (hasMultipleVariants && !selectedVariantId) {
+      toast.info('Пожалуйста, выберите вариант товара');
+      return;
+    }
+
     setIsAddingToCart(true);
     try {
-      const success = await addToCart(parseInt(product.id), quantity);
+      const variantId = hasMultipleVariants ? selectedVariantId || undefined : undefined;
+      const success = await addToCart(parseInt(product.id), quantity, variantId ?? undefined);
       if (success) {
         toast.success(`Добавлено в корзину: ${quantity} шт.`);
       } else {
@@ -148,14 +181,10 @@ const ProductDetail = () => {
     try {
       if (isInFavorites) {
         const success = await removeFromWishlist(parseInt(product.id));
-        if (success) {
-          toast.success('Удалено из избранного');
-        }
+        if (success) toast.success('Удалено из избранного');
       } else {
         const success = await addToWishlist(parseInt(product.id));
-        if (success) {
-          toast.success('Добавлено в избранное');
-        }
+        if (success) toast.success('Добавлено в избранное');
       }
     } catch (error) {
       toast.error('Ошибка при обновлении избранного');
@@ -165,15 +194,14 @@ const ProductDetail = () => {
   };
 
   const handlePrevImage = () => {
-    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : displayImages.length - 1));
   };
 
   const handleNextImage = () => {
-    setSelectedImageIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+    setSelectedImageIndex((prev) => (prev < displayImages.length - 1 ? prev + 1 : 0));
   };
 
   const handleBackToCatalog = () => {
-    // Use browser back to preserve filters and pagination state
     navigate(-1);
   };
 
@@ -184,20 +212,13 @@ const ProductDetail = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm font-roboto text-muted-foreground mb-6 flex-wrap">
-          <Link to="/" className="hover:text-primary">
-            Главная
-          </Link>
+          <Link to="/" className="hover:text-primary">Главная</Link>
           <ChevronRight className="h-4 w-4" />
-          <Link to="/catalog" className="hover:text-primary">
-            Каталог
-          </Link>
-          {breadcrumbPath.map((crumb, index) => (
+          <Link to="/catalog" className="hover:text-primary">Каталог</Link>
+          {breadcrumbPath.map((crumb: any, index: number) => (
             <div key={index} className="flex items-center gap-2">
               <ChevronRight className="h-4 w-4" />
-              <Link 
-                to={`/catalog?categoryId=${crumb.categoryId}`}
-                className="hover:text-primary"
-              >
+              <Link to={`/catalog?categoryId=${crumb.categoryId}`} className="hover:text-primary">
                 {crumb.name}
               </Link>
             </div>
@@ -215,52 +236,34 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
           {/* Images */}
           <div className="flex gap-4">
-            {/* Thumbnails */}
-            {allImages.length > 1 && (
+            {displayImages.length > 1 && (
               <div className="flex flex-col gap-2 w-20">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 mx-auto"
-                  onClick={handlePrevImage}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 mx-auto" onClick={handlePrevImage}>
                   <ChevronUp className="h-4 w-4" />
                 </Button>
                 <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto scrollbar-thin">
-                  {allImages.map((img, index) => (
+                  {displayImages.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
-                        index === selectedImageIndex
-                          ? 'border-primary'
-                          : 'border-transparent hover:border-muted-foreground/50'
+                        index === selectedImageIndex ? 'border-primary' : 'border-transparent hover:border-muted-foreground/50'
                       }`}
                     >
-                      <img
-                        src={img}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 mx-auto"
-                  onClick={handleNextImage}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 mx-auto" onClick={handleNextImage}>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </div>
             )}
 
-            {/* Main Image */}
             <div className="flex-1 relative aspect-square rounded-xl overflow-hidden bg-muted">
-              {hasValidImages ? (
+              {displayImages.length > 0 ? (
                 <img
-                  src={allImages[selectedImageIndex] || product.image}
+                  src={displayImages[selectedImageIndex] || product.image}
                   alt={product.name}
                   className="object-contain w-full h-full p-4"
                   onError={(e) => {
@@ -272,7 +275,6 @@ const ProductDetail = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary/50"><line x1="2" x2="22" y1="2" y2="22"></line><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83"></path><line x1="13.5" x2="6" y1="13.5" y2="21"></line><path d="m18 12 2 2 2-2"></path><path d="M21 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"></path></svg>
                       </div>
                       <span class="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
-                      <span class="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
                     `;
                     (e.target as HTMLImageElement).parentElement?.appendChild(placeholder);
                   }}
@@ -283,39 +285,29 @@ const ProductDetail = () => {
                     <ImageOff className="h-8 w-8 text-primary/50" />
                   </div>
                   <span className="text-sm text-muted-foreground font-medium">Изображение скоро появится</span>
-                  <span className="text-xs text-muted-foreground/70 mt-1">Мы работаем над этим ✨</span>
                 </div>
               )}
               {product.isNew && (
-                <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground font-roboto">
-                  Новинка
-                </Badge>
+                <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground font-roboto">Новинка</Badge>
               )}
               {discount > 0 && (
-                <Badge className="absolute top-4 right-4 bg-destructive text-destructive-foreground font-roboto">
-                  -{discount}%
-                </Badge>
+                <Badge className="absolute top-4 right-4 bg-destructive text-destructive-foreground font-roboto">-{discount}%</Badge>
               )}
             </div>
           </div>
 
           {/* Info */}
           <div>
-            <p className="text-sm text-primary font-roboto mb-2">{product.brand}</p>
+            {product.brand && <p className="text-sm text-primary font-roboto mb-2">{product.brand}</p>}
             <h1 className="text-3xl font-playfair font-bold mb-4">{product.name}</h1>
 
-            {/* Rating - only show if there are reviews */}
             {product.reviewCount > 0 && (
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.floor(product.rating)
-                          ? 'fill-primary text-primary'
-                          : 'text-muted-foreground'
-                      }`}
+                      className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-primary text-primary' : 'text-muted-foreground'}`}
                     />
                   ))}
                 </div>
@@ -327,52 +319,37 @@ const ProductDetail = () => {
 
             {/* Price */}
             <div className="flex items-center gap-3 mb-6">
-              {product.discountPrice ? (
+              {displayDiscountPrice ? (
                 <>
                   <span className="text-3xl font-roboto font-bold text-primary">
-                    {product.discountPrice.toLocaleString('ru-RU')} ₽
+                    {displayDiscountPrice.toLocaleString('ru-RU')} ₽
                   </span>
                   <span className="text-xl font-roboto text-muted-foreground line-through">
-                    {product.price.toLocaleString('ru-RU')} ₽
+                    {displayPrice.toLocaleString('ru-RU')} ₽
                   </span>
                 </>
               ) : (
                 <span className="text-3xl font-roboto font-bold">
-                  {product.price.toLocaleString('ru-RU')} ₽
+                  {displayPrice.toLocaleString('ru-RU')} ₽
                 </span>
               )}
             </div>
 
-            {/* Variants */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="mb-6">
-                <Label className="font-roboto mb-2 block">
-                  {product.variants[0].name}:
-                </Label>
-                <Select value={selectedVariant} onValueChange={setSelectedVariant}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.variants.map((variant) => (
-                      <SelectItem key={variant.value} value={variant.value}>
-                        {variant.value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Variant Selector */}
+            {stockVariants.length > 0 && (
+              <VariantSelector
+                variants={stockVariants}
+                selectedVariantId={selectedVariantId}
+                onSelectVariant={handleSelectVariant}
+                isClothing={isClothing}
+              />
             )}
 
             {/* Quantity */}
             <div className="mb-6">
               <label className="font-roboto mb-2 block">Количество:</label>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
+                <Button variant="outline" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))}>
                   -
                 </Button>
                 <span className="w-12 text-center font-roboto font-medium">{quantity}</span>
@@ -388,10 +365,10 @@ const ProductDetail = () => {
                 className="flex-1 font-roboto"
                 size="lg"
                 onClick={handleAddToCart}
-                disabled={!product.inStock || isAddingToCart}
+                disabled={!displayInStock || isAddingToCart}
               >
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                {product.inStock ? 'Добавить в корзину' : 'Нет в наличии'}
+                {displayInStock ? 'Добавить в корзину' : 'Нет в наличии'}
               </Button>
               <Button
                 variant="outline"
@@ -404,13 +381,12 @@ const ProductDetail = () => {
               </Button>
             </div>
 
-            {/* Description label */}
+            {/* Description */}
             <div className="border-t border-border pt-6">
               <h3 className="font-playfair font-semibold text-lg mb-3">Описание</h3>
               <p className="text-sm font-roboto text-foreground/80 leading-relaxed mb-4">
                 {product.description}
               </p>
-              {/* Skin Type */}
               {product.skin_type && (
                 <p className="text-sm font-roboto text-foreground/80">
                   <span className="font-medium">Тип кожи:</span> {product.skin_type}
@@ -444,9 +420,7 @@ const ProductDetail = () => {
           </TabsContent>
           <TabsContent value="reviews" className="mt-6">
             <div className="text-center py-8">
-              <p className="font-roboto text-muted-foreground">
-                Отзывов пока нет. Будьте первым!
-              </p>
+              <p className="font-roboto text-muted-foreground">Отзывов пока нет. Будьте первым!</p>
             </div>
           </TabsContent>
         </Tabs>
@@ -468,9 +442,5 @@ const ProductDetail = () => {
     </div>
   );
 };
-
-const Label = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <label className={`text-sm font-medium ${className}`}>{children}</label>
-);
 
 export default ProductDetail;
