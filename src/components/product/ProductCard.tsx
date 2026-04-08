@@ -86,9 +86,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
+  const hasMultipleVariants = (product.variantCount || 1) > 1;
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (hasMultipleVariants) {
+      navigate(getProductUrl());
+      toast.info('Выберите вариант товара');
+      return;
+    }
     
     if (!isAuthenticated) {
       toast.info('Войдите в аккаунт, чтобы добавить товар в корзину');
@@ -272,9 +280,10 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           className="w-full font-roboto"
           onClick={handleAddToCart}
           disabled={!product.inStock || isAddingToCart}
+          variant={hasMultipleVariants ? 'outline' : 'default'}
         >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          {product.inStock ? 'В корзину' : 'Нет в наличии'}
+          {!product.inStock ? 'Нет в наличии' : hasMultipleVariants ? 'Выбрать вариант' : 'В корзину'}
         </Button>
       </CardContent>
     </Card>
