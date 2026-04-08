@@ -3,6 +3,25 @@ import { useAuthStore } from '@/store/authStore';
 
 const API_BASE_URL = `${BASE_URL}/api`;
 
+export interface StockVariant {
+  id: number;
+  sku: string | null;
+  name: string;
+  image: string;
+  images: string[];
+  price: number;
+  discountPrice: number | null;
+  inStock: boolean;
+  isNew: boolean;
+  isBestseller: boolean;
+  isFeatured: boolean;
+  isActive: boolean;
+  isAvailable: boolean;
+  sortOrder: number;
+  stockQuantity: number;
+  options: Record<string, string>;
+}
+
 export interface ApiProduct {
   id: string;
   name: string;
@@ -18,13 +37,17 @@ export interface ApiProduct {
   usage: string;
   rating: string;
   reviewCount: number;
-  variants: { name: string; value: string }[];
+  variants?: { name: string; value: string }[];
+  stockVariants?: StockVariant[];
+  variantCount?: number;
+  stockQuantity?: number;
   inStock: boolean;
   isNew: boolean;
   isBestseller: boolean;
   brand_id: number;
   subcategory_id: number;
   isFeatured: boolean;
+  product_type?: string;
   top_category_name?: string;
   top_category_id?: number;
   top_category_slug?: string;
@@ -434,11 +457,13 @@ export const api = {
     return response.json();
   },
 
-  async addToCart(productId: number, quantity: number = 1): Promise<CartItemApi> {
+  async addToCart(productId: number, quantity: number = 1, variantId?: number): Promise<CartItemApi> {
+    const body: Record<string, any> = { product_id: productId, quantity };
+    if (variantId) body.variant_id = variantId;
     const response = await fetchWithCreds(`${API_BASE_URL}/cart`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, quantity }),
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
