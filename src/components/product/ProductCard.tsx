@@ -86,6 +86,21 @@ export const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
+  // Build product URL with category path
+  const getProductUrl = () => {
+    if (product.slug && product.top_category_slug) {
+      let path = `/catalog/${product.top_category_slug}`;
+      if (product.parent_category_slug) {
+        path += `/${product.parent_category_slug}`;
+      }
+      if (product.category_slug && product.category_level && product.category_level >= 3) {
+        path += `/${product.category_slug}`;
+      }
+      return `${path}/product/${product.slug}`;
+    }
+    return `/product/${product.slug || product.id}`;
+  };
+
   const hasMultipleVariants = (product.variantCount || 1) > 1;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
@@ -288,21 +303,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
       </CardContent>
     </Card>
   );
-
-  // Build product URL with category path
-  const getProductUrl = () => {
-    if (product.slug && product.top_category_slug) {
-      let path = `/catalog/${product.top_category_slug}`;
-      if (product.parent_category_slug) {
-        path += `/${product.parent_category_slug}`;
-      }
-      if (product.category_slug && product.category_level && product.category_level >= 3) {
-        path += `/${product.category_slug}`;
-      }
-      return `${path}/product/${product.slug}`;
-    }
-    return `/product/${product.slug || product.id}`;
-  };
 
   const productUrl = getProductUrl();
 
