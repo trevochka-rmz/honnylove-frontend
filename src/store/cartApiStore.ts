@@ -8,7 +8,7 @@ interface CartApiState {
   isLoading: boolean;
   error: string | null;
   fetchCart: () => Promise<void>;
-  addToCart: (productId: number, quantity?: number) => Promise<boolean>;
+  addToCart: (productId: number, quantity?: number, variantId?: number) => Promise<boolean>;
   updateQuantity: (cartItemId: number, quantity: number) => Promise<boolean>;
   removeFromCart: (cartItemId: number) => Promise<boolean>;
   clearCart: () => Promise<void>;
@@ -40,12 +40,12 @@ export const useCartApiStore = create<CartApiState>((set, get) => ({
     }
   },
 
-  addToCart: async (productId: number, quantity: number = 1) => {
+  addToCart: async (productId: number, quantity: number = 1, variantId?: number) => {
     const { isAuthenticated } = useAuthStore.getState();
     if (!isAuthenticated) return false;
 
     try {
-      await api.addToCart(productId, quantity);
+      await api.addToCart(productId, quantity, variantId);
       await get().fetchCart();
       return true;
     } catch (error) {

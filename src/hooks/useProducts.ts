@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { api, ApiProduct, ProductsParams, ProductsResponse } from '@/services/api';
+import { api, ApiProduct, ProductsParams, ProductsResponse, StockVariant } from '@/services/api';
+
+export type { StockVariant } from '@/services/api';
 
 export interface Product {
   id: string;
@@ -17,9 +19,13 @@ export interface Product {
   rating: number;
   reviewCount: number;
   variants?: { name: string; value: string }[];
+  stockVariants?: StockVariant[];
+  variantCount?: number;
+  stockQuantity?: number;
   inStock: boolean;
   isNew?: boolean;
   isBestseller?: boolean;
+  product_type?: string;
   top_category_name?: string;
   top_category_id?: number;
   top_category_slug?: string;
@@ -51,9 +57,13 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => ({
   rating: parseFloat(apiProduct.rating),
   reviewCount: apiProduct.reviewCount,
   variants: apiProduct.variants,
+  stockVariants: apiProduct.stockVariants,
+  variantCount: apiProduct.variantCount,
+  stockQuantity: apiProduct.stockQuantity,
   inStock: apiProduct.inStock,
   isNew: apiProduct.isNew,
   isBestseller: apiProduct.isBestseller,
+  product_type: apiProduct.product_type,
   top_category_name: apiProduct.top_category_name,
   top_category_id: apiProduct.top_category_id,
   top_category_slug: apiProduct.top_category_slug,
