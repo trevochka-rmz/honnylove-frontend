@@ -55,9 +55,16 @@ const Favorites = () => {
     rating: parseFloat(item.product.rating),
     reviewCount: item.product.reviewCount,
     variants: item.product.variants,
+    variantCount: item.product.variantCount,
+    stockVariants: item.product.stockVariants,
     inStock: item.product.inStock,
     isNew: item.product.isNew,
     isBestseller: item.product.isBestseller,
+    top_category_slug: item.product.top_category_slug,
+    parent_category_slug: item.product.parent_category_slug,
+    category_slug: item.product.category_slug,
+    category_level: item.product.category_level,
+    slug: item.product.slug,
   }));
 
   const handleClearWishlist = async () => {
