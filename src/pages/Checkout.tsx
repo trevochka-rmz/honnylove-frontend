@@ -494,26 +494,34 @@ const Checkout = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {availableItems.map((item) => (
-                      <div key={item.id} className="flex gap-3">
-                        <div className="w-12 h-12 rounded bg-muted overflow-hidden flex-shrink-0">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.name}
-                            className="w-full h-full object-cover"
-                          />
+                    {availableItems.map((item) => {
+                      const selectedVariant = item.variant_id && item.product.stockVariants
+                        ? item.product.stockVariants.find(v => v.id === item.variant_id)
+                        : null;
+                      const displayImage = selectedVariant?.image || item.product.image;
+                      const variantLabel = selectedVariant?.name || (item.product.stockVariants?.[0]?.name);
+                      
+                      return (
+                        <div key={item.id} className="flex gap-3">
+                          <div className="w-12 h-12 rounded bg-muted overflow-hidden flex-shrink-0">
+                            <img
+                              src={displayImage}
+                              alt={item.product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-roboto line-clamp-1">{item.product.name}</p>
+                            <p className="text-xs text-muted-foreground font-roboto">
+                              {variantLabel ? `${variantLabel} · ` : ''}{item.quantity} шт.
+                            </p>
+                          </div>
+                          <div className="text-sm font-roboto font-medium">
+                            {item.subtotal.toLocaleString('ru-RU')} ₽
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-roboto line-clamp-1">{item.product.name}</p>
-                          <p className="text-xs text-muted-foreground font-roboto">
-                            {item.quantity} шт.
-                          </p>
-                        </div>
-                        <div className="text-sm font-roboto font-medium">
-                          {item.subtotal.toLocaleString('ru-RU')} ₽
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="border-t border-border pt-4 space-y-2">
