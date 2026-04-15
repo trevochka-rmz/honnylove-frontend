@@ -200,6 +200,19 @@ const Cart = () => {
               const isInStock = item.inStock && !item.outOfStock;
               const isSelected = selectedIds.includes(item.id);
               
+              // Find the selected variant info
+              const selectedVariant = item.variant_id && item.product.stockVariants
+                ? item.product.stockVariants.find(v => v.id === item.variant_id)
+                : null;
+              
+              const displayImage = selectedVariant?.image || item.product.image;
+              const displayName = item.product.name;
+              const variantLabel = selectedVariant?.name || (item.product.stockVariants?.[0]?.name);
+              const displayPrice = item.unitPrice;
+              const originalPrice = selectedVariant
+                ? (selectedVariant.discountPrice ? selectedVariant.price : null)
+                : (item.product.discountPrice ? parseFloat(item.product.price) : null);
+              
               return (
                 <Card 
                   key={item.id} 
@@ -219,8 +232,8 @@ const Cart = () => {
 
                       <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
                         <img
-                          src={item.product.image}
-                          alt={item.product.name}
+                          src={displayImage}
+                          alt={displayName}
                           className="w-full h-full object-cover"
                         />
                         {!isInStock && (
@@ -234,17 +247,17 @@ const Cart = () => {
 
                       <div className="flex-1 min-w-0">
                         <Link 
-                          to={`/product/${item.product.id}`}
+                          to={`/product/${item.product.slug || item.product.id}`}
                           className="font-roboto font-medium mb-1 line-clamp-2 hover:text-primary transition-colors"
                         >
-                          {item.product.name}
+                          {displayName}
                         </Link>
                         <p className="text-sm text-muted-foreground font-roboto mb-1">
                           {item.product.brand}
                         </p>
-                        {item.product.variants?.[0] && (
+                        {variantLabel && (
                           <p className="text-sm text-muted-foreground font-roboto">
-                            {item.product.variants[0].value}
+                            {variantLabel}
                           </p>
                         )}
                         <div className="flex items-center gap-3 mt-3">
@@ -284,13 +297,13 @@ const Cart = () => {
                         <div className="font-roboto font-bold text-lg">
                           {item.subtotal.toLocaleString('ru-RU')} ₽
                         </div>
-                        {item.product.discountPrice && (
+                        {originalPrice && (
                           <div className="text-sm text-muted-foreground line-through">
-                            {(parseFloat(item.product.price) * item.quantity).toLocaleString('ru-RU')} ₽
+                            {(originalPrice * item.quantity).toLocaleString('ru-RU')} ₽
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground mt-1">
-                          {item.unitPrice.toLocaleString('ru-RU')} ₽ / шт
+                          {displayPrice.toLocaleString('ru-RU')} ₽ / шт
                         </div>
                       </div>
                     </div>

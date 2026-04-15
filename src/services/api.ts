@@ -212,6 +212,7 @@ export interface CartItemApi {
   quantity: number;
   created_at: string;
   updated_at: string;
+  variant_id?: number;
   product: ApiProduct;
   inStock: boolean;
   availableQuantity: string;
