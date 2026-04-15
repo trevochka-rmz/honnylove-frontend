@@ -102,7 +102,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const hasMultipleVariants = (product.variantCount || 1) > 1;
-  const cartItems = useCartApiStore((state) => state.items);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
