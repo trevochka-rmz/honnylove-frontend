@@ -172,10 +172,12 @@ const Checkout = () => {
         ? `Самовывоз: ${storeAddress}`
         : `${formData.city}, ${formData.street}`;
       
-      const selectedItemIds = availableItems.map(item => item.id);
+      // ВАЖНО: selected_items должен содержать ID записей корзины (cart item id), а не product_id
+      const selectedCartItemIds = availableItems.map(item => item.id);
+      console.log('[Checkout] Sending cart item IDs:', selectedCartItemIds, 'from items:', availableItems.map(i => ({ cartId: i.id, productId: i.product_id, variantId: i.variant_id })));
 
       const checkoutData: CheckoutRequest = {
-        selected_items: selectedItemIds,
+        selected_items: selectedCartItemIds,
         customer_first_name: formData.firstName,
         customer_last_name: formData.lastName,
         customer_phone: `+7${formData.phone}`,
