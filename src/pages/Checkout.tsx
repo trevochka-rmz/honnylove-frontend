@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -53,10 +54,11 @@ const getCursorPosForDigitCount = (count: number): number => {
 };
 
 const Checkout = () => {
-  const { items, summary, isLoading, fetchCart, clearCart } = useCartApiStore();
+  const { items, summary, isLoading, fetchCart } = useCartApiStore();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: profile } = useProfile();
   const { data: settings } = useSettings();
+  const queryClient = useQueryClient();
   
   const navigate = useNavigate();
 
@@ -191,12 +193,16 @@ const Checkout = () => {
       if (formData.paymentMethod === 'cash') {
         const response = await orderApi.checkoutCash(checkoutData);
         sessionStorage.removeItem('checkoutItems');
-        await clearCart();
+        // Refresh cart from server (backend already removed only ordered items)
+        await fetchCart();
+        // Invalidate orders so profile shows the new order without manual refresh
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
         navigate(`/order-success?order_id=${response.data.order.id}&order_number=${response.data.order_number}`);
       } else {
         const response = await orderApi.checkoutWithPayment(checkoutData);
         sessionStorage.removeItem('checkoutItems');
-        await clearCart();
+        await fetchCart();
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
         if (response.data.payment?.confirmation_url) {
           window.location.href = response.data.payment.confirmation_url;
         } else {
