@@ -176,7 +176,6 @@ const Checkout = () => {
       
       // ВАЖНО: selected_items должен содержать ID записей корзины (cart item id), а не product_id
       const selectedCartItemIds = availableItems.map(item => item.id);
-      console.log('[Checkout] Sending cart item IDs:', selectedCartItemIds, 'from items:', availableItems.map(i => ({ cartId: i.id, productId: i.product_id, variantId: i.variant_id })));
 
       const checkoutData: CheckoutRequest = {
         selected_items: selectedCartItemIds,
