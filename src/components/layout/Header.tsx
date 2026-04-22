@@ -147,7 +147,15 @@ export const Header = () => {
             </button>
           ))}
           <button
-            onClick={handleSearchSubmit}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSearchSubmit(e as any);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleSearchSubmit(e as any);
+            }}
             className="w-full px-4 py-2 text-sm text-primary hover:bg-muted transition-colors text-center font-medium"
           >
             Показать все результаты ({searchResults.length})
