@@ -244,11 +244,16 @@ export interface CartUpdateResponse {
   };
 }
 
-// Track if a refresh is already in progress to avoid multiple simultaneous refreshes
-let isRefreshing = false;
-let refreshPromise: Promise<boolean> | null = null;
+// Refresh result types:
+// 'ok'         — token refreshed, retry the original request
+// 'unauth'     — 401/explicit auth failure, force logout
+// 'unavailable'— server unreachable / 5xx / network error, do NOT logout
+type RefreshResult = 'ok' | 'unauth' | 'unavailable';
 
-const tryRefreshToken = async (): Promise<boolean> => {
+let isRefreshing = false;
+let refreshPromise: Promise<RefreshResult> | null = null;
+
+const tryRefreshToken = async (): Promise<RefreshResult> => {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
@@ -259,9 +264,14 @@ const tryRefreshToken = async (): Promise<boolean> => {
         method: 'POST',
         credentials: 'include',
       });
-      return res.ok;
+      if (res.ok) return 'ok';
+      // Only treat explicit auth failures as logout-worthy.
+      // 5xx (500/502/503/504) means backend is temporarily down — keep session.
+      if (res.status === 401 || res.status === 403) return 'unauth';
+      return 'unavailable';
     } catch {
-      return false;
+      // Network error / fetch threw — backend unreachable, keep session.
+      return 'unavailable';
     } finally {
       isRefreshing = false;
       refreshPromise = null;
@@ -291,11 +301,16 @@ export const fetchWithCreds = async (url: string, options: RequestInit = {}, _is
   if ((response.status === 401 || response.status === 403) && !_isRetry) {
     const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh');
     if (!isAuthEndpoint) {
-      const refreshed = await tryRefreshToken();
-      if (refreshed) {
+      const result = await tryRefreshToken();
+      if (result === 'ok') {
         return fetchWithCreds(url, options, true);
       }
-      await forceLogout();
+      if (result === 'unauth') {
+        // Real auth failure — log out
+        await forceLogout();
+        return response;
+      }
+      // 'unavailable' — backend down, keep session, just return original 401
       return response;
     }
   }

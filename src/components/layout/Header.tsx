@@ -25,6 +25,7 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const debouncedQuery = useDebounce(searchQuery, 300);
@@ -38,15 +39,22 @@ export const Header = () => {
     }
   }, [isAuthenticated, fetchCart, fetchWishlist]);
 
-  // Close search dropdown when clicking outside
+  // Close search dropdown when clicking outside (handle both mouse and touch)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      const insideDesktop = searchRef.current?.contains(target);
+      const insideMobile = mobileSearchRef.current?.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setIsSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const totalItems = getTotalItems();
@@ -102,7 +110,15 @@ export const Header = () => {
           {searchResults.slice(0, 6).map((product) => (
             <button
               key={product.id}
-              onClick={() => handleProductClick(product)}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleProductClick(product);
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                handleProductClick(product);
+              }}
               className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
             >
               <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
@@ -131,7 +147,15 @@ export const Header = () => {
             </button>
           ))}
           <button
-            onClick={handleSearchSubmit}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              handleSearchSubmit(e as any);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              handleSearchSubmit(e as any);
+            }}
             className="w-full px-4 py-2 text-sm text-primary hover:bg-muted transition-colors text-center font-medium"
           >
             Показать все результаты ({searchResults.length})
@@ -281,7 +305,7 @@ export const Header = () => {
         </div>
 
         {/* Search - Mobile */}
-        <div className="md:hidden mt-4">
+        <div className="md:hidden mt-4" ref={mobileSearchRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
