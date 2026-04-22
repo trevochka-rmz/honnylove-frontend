@@ -25,6 +25,7 @@ export const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const debouncedQuery = useDebounce(searchQuery, 300);
