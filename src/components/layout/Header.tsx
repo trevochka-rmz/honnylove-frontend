@@ -110,7 +110,15 @@ export const Header = () => {
           {searchResults.slice(0, 6).map((product) => (
             <button
               key={product.id}
-              onClick={() => handleProductClick(product)}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleProductClick(product);
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                handleProductClick(product);
+              }}
               className="w-full flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors text-left"
             >
               <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
