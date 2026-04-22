@@ -42,7 +42,10 @@ export const Header = () => {
   // Close search dropdown when clicking outside (handle both mouse and touch)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideDesktop = searchRef.current?.contains(target);
+      const insideMobile = mobileSearchRef.current?.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setIsSearchOpen(false);
       }
     };
