@@ -305,7 +305,7 @@ export const Header = () => {
         </div>
 
         {/* Search - Mobile */}
-        <div className="md:hidden mt-4">
+        <div className="md:hidden mt-4" ref={mobileSearchRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
