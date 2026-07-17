@@ -175,7 +175,7 @@ export const Header = () => {
       <div className="bg-gradient-hero py-2">
         <div className="container mx-auto px-4">
           <p className="text-center text-sm text-primary-foreground font-roboto">
-            ✨ Бесплатная доставка при заказе от 3000₽
+            ✨ Бесплатная доставка по Сибири при заказе от 3000₽
           </p>
         </div>
       </div>
