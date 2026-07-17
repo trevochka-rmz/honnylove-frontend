@@ -114,7 +114,8 @@ export const useProduct = (id: string) => {
       const apiProduct = await api.getProductById(id);
       return mapApiProduct(apiProduct);
     },
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    retry: 2,
   });
 };
