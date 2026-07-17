@@ -19,7 +19,7 @@ const ProductDetail = () => {
   const { productSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: product, isLoading } = useProduct(productSlug || '');
+  const { data: product, isLoading, refetch } = useProduct(productSlug || '');
   const { data: allProductsData } = useProducts({ limit: 50 });
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { addToWishlist, removeFromWishlist, isFavorite } = useWishlistStore();
@@ -78,6 +78,14 @@ const ProductDetail = () => {
     setSelectedVariantId(null);
     setQuantity(1);
   }, [productSlug]);
+
+  // Safeguard: if backend says variantCount > 1 but stockVariants missing, refetch once
+  useEffect(() => {
+    if (product && (product.variantCount || 1) > 1 && (!product.stockVariants || product.stockVariants.length === 0)) {
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   // Reset image when variant changes
   useEffect(() => {
