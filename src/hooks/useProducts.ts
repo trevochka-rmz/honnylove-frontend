@@ -41,8 +41,21 @@ export interface Product {
   slug?: string;
 }
 
+const getApiNumber = (value: unknown, fallback = 0) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
 // Convert API product to internal Product type
-const mapApiProduct = (apiProduct: ApiProduct): Product => ({
+const mapApiProduct = (apiProduct: ApiProduct): Product => {
+  const rawProduct = apiProduct as ApiProduct & {
+    stock_variants?: StockVariant[];
+    variant_count?: number;
+    stock_quantity?: number;
+  };
+  const stockVariants = rawProduct.stockVariants || rawProduct.stock_variants || [];
+
+  return ({
   id: apiProduct.id,
   name: apiProduct.name,
   brand: apiProduct.brand,
@@ -57,9 +70,9 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => ({
   rating: parseFloat(apiProduct.rating),
   reviewCount: apiProduct.reviewCount,
   variants: apiProduct.variants,
-  stockVariants: apiProduct.stockVariants,
-  variantCount: apiProduct.variantCount,
-  stockQuantity: apiProduct.stockQuantity,
+  stockVariants,
+  variantCount: getApiNumber(rawProduct.variantCount ?? rawProduct.variant_count, stockVariants.length || 1),
+  stockQuantity: getApiNumber(rawProduct.stockQuantity ?? rawProduct.stock_quantity),
   inStock: apiProduct.inStock,
   isNew: apiProduct.isNew,
   isBestseller: apiProduct.isBestseller,
@@ -77,7 +90,8 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => ({
   brand_slug: apiProduct.brand_slug,
   skin_type: apiProduct.skin_type,
   slug: apiProduct.slug,
-});
+  });
+};
 
 export interface ProductsResult {
   products: Product[];

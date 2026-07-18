@@ -10,8 +10,21 @@ interface VariantSelectorProps {
   isClothing: boolean;
 }
 
+const normalizeKey = (key: string) => key.trim().toLowerCase();
+
+const getOptionValue = (variant: StockVariant, keys: string[]) => {
+  const options = variant.options || {};
+  const normalizedKeys = keys.map(normalizeKey);
+  const found = Object.entries(options).find(([key]) => normalizedKeys.includes(normalizeKey(key)));
+  return found?.[1] || '';
+};
+
+const getColor = (variant: StockVariant) => getOptionValue(variant, ['Цвет', 'color', 'colour']);
+const getSize = (variant: StockVariant) => getOptionValue(variant, ['Размер', 'size']);
+const getColorCode = (variant: StockVariant) => getOptionValue(variant, ['Код', 'hex', 'color_hex', 'colorCode']);
+
 export const VariantSelector = ({ variants, selectedVariantId, onSelectVariant, isClothing }: VariantSelectorProps) => {
-  const hasClothingOptions = variants.some((variant) => Boolean(variant.options?.['Цвет'] && variant.options?.['Размер']));
+  const hasClothingOptions = variants.some((variant) => Boolean(getColor(variant) && getSize(variant)));
 
   if (!isClothing && !hasClothingOptions) {
     // Simple variant selector for cosmetics (volume, etc.)
@@ -23,10 +36,10 @@ export const VariantSelector = ({ variants, selectedVariantId, onSelectVariant, 
         <div className="flex flex-wrap gap-2">
           {variants.map((variant) => {
             const isSelected = variant.id === selectedVariantId;
-            const optionLabel = Object.entries(variant.options)
-              .filter(([key]) => key !== 'Код')
+            const optionLabel = Object.entries(variant.options || {})
+              .filter(([key]) => normalizeKey(key) !== 'код')
               .map(([, val]) => val)
-              .join(' / ');
+              .join(' / ') || variant.name;
             return (
               <button
                 key={variant.id}
@@ -63,15 +76,15 @@ interface ClothingVariantSelectorProps {
 const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant }: ClothingVariantSelectorProps) => {
   const selectedVariant = variants.find(v => v.id === selectedVariantId);
   const fallbackVariant = selectedVariant || variants.find(v => v.inStock) || variants[0];
-  const selectedColor = fallbackVariant?.options?.['Цвет'] || '';
-  const selectedSize = selectedVariant?.options?.['Размер'] || '';
+  const selectedColor = fallbackVariant ? getColor(fallbackVariant) : '';
+  const selectedSize = selectedVariant ? getSize(selectedVariant) : '';
 
   // Extract unique colors with their hex codes
   const colors = useMemo(() => {
     const colorMap = new Map<string, string>();
     variants.forEach(v => {
-      const color = v.options?.['Цвет'];
-      const code = v.options?.['Код'];
+      const color = getColor(v);
+      const code = getColorCode(v);
       if (color && !colorMap.has(color)) {
         colorMap.set(color, code || '');
       }
@@ -83,7 +96,7 @@ const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant 
   const sizesForColor = useMemo(() => {
     if (!selectedColor) return [];
     return variants
-      .filter(v => v.options?.['Цвет'] === selectedColor)
+      .filter(v => getColor(v) === selectedColor)
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [variants, selectedColor]);
 
@@ -92,8 +105,8 @@ const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant 
 
   const sortedSizes = useMemo(() => {
     return [...sizesForColor].sort((a, b) => {
-      const sizeA = a.options?.['Размер'] || '';
-      const sizeB = b.options?.['Размер'] || '';
+      const sizeA = getSize(a);
+      const sizeB = getSize(b);
       const idxA = sizeOrder.indexOf(sizeA);
       const idxB = sizeOrder.indexOf(sizeB);
       if (idxA !== -1 && idxB !== -1) return idxA - idxB;
@@ -103,14 +116,14 @@ const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant 
 
   // Check if any variant of a color is in stock
   const isColorAvailable = (colorName: string) => {
-    return variants.some(v => v.options?.['Цвет'] === colorName && v.inStock);
+    return variants.some(v => getColor(v) === colorName && v.inStock);
   };
 
   const handleColorSelect = (colorName: string) => {
     // Find first available variant with this color and current size, or just first available
-    const withSameSize = variants.find(v => v.options?.['Цвет'] === colorName && v.options?.['Размер'] === selectedSize && v.inStock);
-    const firstAvailable = variants.find(v => v.options?.['Цвет'] === colorName && v.inStock);
-    const firstAny = variants.find(v => v.options?.['Цвет'] === colorName);
+    const withSameSize = variants.find(v => getColor(v) === colorName && getSize(v) === selectedSize && v.inStock);
+    const firstAvailable = variants.find(v => getColor(v) === colorName && v.inStock);
+    const firstAny = variants.find(v => getColor(v) === colorName);
     onSelectVariant(withSameSize || firstAvailable || firstAny!);
   };
 
@@ -165,7 +178,7 @@ const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant 
           </label>
           <div className="flex flex-wrap gap-2">
             {sortedSizes.map((variant) => {
-              const size = variant.options?.['Размер'] || variant.name;
+              const size = getSize(variant) || variant.name;
               const isSelected = variant.id === selectedVariantId;
               return (
                 <button
