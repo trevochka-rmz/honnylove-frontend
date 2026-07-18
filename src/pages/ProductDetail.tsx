@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -19,7 +19,7 @@ const ProductDetail = () => {
   const { productSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: product, isLoading, refetch } = useProduct(productSlug || '');
+  const { data: product, isLoading, refetch, isFetching } = useProduct(productSlug || '');
   const { data: allProductsData } = useProducts({ limit: 50 });
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { addToWishlist, removeFromWishlist, isFavorite } = useWishlistStore();
@@ -32,12 +32,15 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const variantRefetchAttempts = useRef<Record<string, number>>({});
 
   const referrerPath = location.state?.categoryPath || null;
 
   const stockVariants = product?.stockVariants || [];
-  const hasMultipleVariants = (product?.variantCount || 1) > 1;
-  const isClothing = product?.product_type === 'clothing';
+  const expectedVariantCount = Math.max(product?.variantCount || 1, stockVariants.length || 0);
+  const hasMultipleVariants = expectedVariantCount > 1;
+  const variantsAreIncomplete = hasMultipleVariants && stockVariants.length < expectedVariantCount;
+  const isClothing = product?.product_type === 'clothing' || stockVariants.some((variant) => Boolean(variant.options?.['Цвет'] && variant.options?.['Размер']));
 
   const selectedVariant = useMemo(() => {
     return stockVariants.find(v => v.id === selectedVariantId) || null;
@@ -66,7 +69,7 @@ const ProductDetail = () => {
 
   // Set initial variant
   useEffect(() => {
-    if (product && stockVariants.length > 0 && !selectedVariantId) {
+    if (product && stockVariants.length > 0 && (!selectedVariantId || !stockVariants.some((variant) => variant.id === selectedVariantId))) {
       const firstInStock = stockVariants.find(v => v.inStock) || stockVariants[0];
       setSelectedVariantId(firstInStock.id);
     }
@@ -77,15 +80,19 @@ const ProductDetail = () => {
     setSelectedImageIndex(0);
     setSelectedVariantId(null);
     setQuantity(1);
+    variantRefetchAttempts.current = {};
   }, [productSlug]);
 
-  // Safeguard: if backend says variantCount > 1 but stockVariants missing, refetch once
+  // Safeguard: if backend says there are more variants than it returned, refetch without cache.
   useEffect(() => {
-    if (product && (product.variantCount || 1) > 1 && (!product.stockVariants || product.stockVariants.length === 0)) {
+    if (!product || !variantsAreIncomplete || isFetching) return;
+    const attempts = variantRefetchAttempts.current[product.id] || 0;
+    if (attempts < 2) {
+      variantRefetchAttempts.current[product.id] = attempts + 1;
       refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product?.id]);
+  }, [product?.id, variantsAreIncomplete, isFetching]);
 
   // Reset image when variant changes
   useEffect(() => {
@@ -344,13 +351,19 @@ const ProductDetail = () => {
             </div>
 
             {/* Variant Selector */}
-            {stockVariants.length > 0 && (
+            {stockVariants.length > 0 && !variantsAreIncomplete && (
               <VariantSelector
                 variants={stockVariants}
                 selectedVariantId={selectedVariantId}
                 onSelectVariant={handleSelectVariant}
                 isClothing={isClothing}
               />
+            )}
+            {variantsAreIncomplete && (
+              <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground font-roboto">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                Загружаем варианты товара...
+              </div>
             )}
 
             {/* Quantity */}
