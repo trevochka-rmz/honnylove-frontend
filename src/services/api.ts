@@ -350,7 +350,6 @@ export const api = {
     const separator = id.includes('?') ? '&' : '?';
     const response = await fetchWithCreds(`${API_BASE_URL}/products/${id}${separator}includeVariants=true&_=${Date.now()}`, {
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' },
     });
     if (!response.ok) throw new Error('Failed to fetch product');
     return response.json();
