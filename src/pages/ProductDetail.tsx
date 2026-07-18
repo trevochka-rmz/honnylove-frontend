@@ -37,7 +37,7 @@ const ProductDetail = () => {
 
   const stockVariants = product?.stockVariants || [];
   const hasMultipleVariants = (product?.variantCount || 1) > 1;
-  const isClothing = product?.product_type === 'clothing';
+  const isClothing = product?.product_type === 'clothing' || stockVariants.some((variant) => Boolean(variant.options?.['Цвет'] && variant.options?.['Размер']));
 
   const selectedVariant = useMemo(() => {
     return stockVariants.find(v => v.id === selectedVariantId) || null;
@@ -66,7 +66,7 @@ const ProductDetail = () => {
 
   // Set initial variant
   useEffect(() => {
-    if (product && stockVariants.length > 0 && !selectedVariantId) {
+    if (product && stockVariants.length > 0 && (!selectedVariantId || !stockVariants.some((variant) => variant.id === selectedVariantId))) {
       const firstInStock = stockVariants.find(v => v.inStock) || stockVariants[0];
       setSelectedVariantId(firstInStock.id);
     }

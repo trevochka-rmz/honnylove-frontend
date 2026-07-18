@@ -11,7 +11,9 @@ interface VariantSelectorProps {
 }
 
 export const VariantSelector = ({ variants, selectedVariantId, onSelectVariant, isClothing }: VariantSelectorProps) => {
-  if (!isClothing) {
+  const hasClothingOptions = variants.some((variant) => Boolean(variant.options?.['Цвет'] && variant.options?.['Размер']));
+
+  if (!isClothing && !hasClothingOptions) {
     // Simple variant selector for cosmetics (volume, etc.)
     return (
       <div className="mb-6">
@@ -60,7 +62,8 @@ interface ClothingVariantSelectorProps {
 
 const ClothingVariantSelector = ({ variants, selectedVariantId, onSelectVariant }: ClothingVariantSelectorProps) => {
   const selectedVariant = variants.find(v => v.id === selectedVariantId);
-  const selectedColor = selectedVariant?.options?.['Цвет'] || '';
+  const fallbackVariant = selectedVariant || variants.find(v => v.inStock) || variants[0];
+  const selectedColor = fallbackVariant?.options?.['Цвет'] || '';
   const selectedSize = selectedVariant?.options?.['Размер'] || '';
 
   // Extract unique colors with their hex codes
