@@ -128,9 +128,9 @@ const ProductDetail = () => {
 
   const isInFavorites = isFavorite(product.id);
 
-  const relatedProducts = allProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const relatedProducts = (product.similarProducts && product.similarProducts.length > 0)
+    ? product.similarProducts.slice(0, 4)
+    : allProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const discount = displayDiscountPrice
     ? Math.round(((displayPrice - displayDiscountPrice) / displayPrice) * 100)
