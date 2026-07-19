@@ -39,7 +39,47 @@ export interface Product {
   brand_slug?: string;
   skin_type?: string;
   slug?: string;
+  similarProducts?: Product[];
 }
+
+interface ApiSimilarProduct {
+  id: string;
+  name: string;
+  slug?: string;
+  price: string;
+  discountPrice?: string | null;
+  image: string;
+  brand?: string;
+  brand_slug?: string;
+  category_name?: string;
+  category_id?: number;
+  rating?: string;
+  reviewCount?: number;
+  isBestseller?: boolean;
+  inStock?: boolean;
+  stockQuantity?: number;
+}
+
+const mapSimilarProduct = (p: ApiSimilarProduct): Product => ({
+  id: p.id,
+  name: p.name,
+  brand: p.brand || '',
+  category: p.category_name || '',
+  price: parseFloat(p.price),
+  discountPrice: p.discountPrice ? parseFloat(p.discountPrice) : undefined,
+  image: p.image,
+  images: [],
+  description: '',
+  rating: p.rating ? parseFloat(p.rating) : 0,
+  reviewCount: p.reviewCount || 0,
+  inStock: p.inStock ?? false,
+  isBestseller: p.isBestseller,
+  category_name: p.category_name,
+  category_id: p.category_id,
+  brand_slug: p.brand_slug,
+  slug: p.slug,
+  stockQuantity: p.stockQuantity,
+});
 
 const getApiNumber = (value: unknown, fallback = 0) => {
   const numberValue = Number(value);
