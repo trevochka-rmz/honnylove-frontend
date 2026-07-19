@@ -405,8 +405,11 @@ const ProductDetail = () => {
             {/* Description */}
             <div className="border-t border-border pt-6">
               <h3 className="font-playfair font-semibold text-lg mb-3">Описание</h3>
-              <p className="text-sm font-roboto text-foreground/80 leading-relaxed mb-4">
-                {product.description}
+              <p className="text-sm font-roboto text-foreground/80 leading-relaxed mb-4 whitespace-pre-line">
+                {(product.description || '')
+                  .replace(/<br\s*\/?>(?:\s*)/gi, '\n')
+                  .replace(/\\n/g, '\n')
+                  .replace(/\\t/g, '\t')}
               </p>
               {product.skin_type && (
                 <p className="text-sm font-roboto text-foreground/80">
