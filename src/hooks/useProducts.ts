@@ -130,6 +130,9 @@ const mapApiProduct = (apiProduct: ApiProduct): Product => {
   brand_slug: apiProduct.brand_slug,
   skin_type: apiProduct.skin_type,
   slug: apiProduct.slug,
+  similarProducts: Array.isArray((rawProduct as any).similarProducts)
+    ? ((rawProduct as any).similarProducts as ApiSimilarProduct[]).map(mapSimilarProduct)
+    : undefined,
   });
 };
 
